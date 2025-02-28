@@ -110,6 +110,13 @@ else if (cmd == "2")
 		if(string.IsNullOrWhiteSpace(userProvidedPath)){
 			userProvidedPath = @"C:\Github\BaseballWebsite\2025\Mustang\Cubs\index.html";
 		}
+		else
+		{
+			if (Directory.Exists(userProvidedPath))
+			{
+				userProvidedPath = Path.Combine(userProvidedPath, "index.html");
+			}
+		}
 	}
 	if (File.Exists(userProvidedPath))
 	{

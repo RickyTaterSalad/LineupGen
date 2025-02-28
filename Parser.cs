@@ -6,7 +6,7 @@ namespace GameGenerator
 {
 	public class Parser
 	{
-		const string lineupTemplate = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"stylesheet\" href=\"../../../style.css\"><title>#TITLE#</title></head><body><div class=\"exported-note\"><div class=\"exported-note-title\">#TITLE#</div><div id=\"rendered-md\">#TABLES#<h1 id=\"links\"><strong>Links</strong></h1><p><a title=\"https://riverabaseball.com\" href=\"https://riverabaseball.com\">Home</a>&nbsp;&nbsp;&nbsp;<a title=\"https://www.youtube.com/playlist?list=PLdbXG0VpP0Mb4p5j_fUam-AX1btECUJNR\" href=\"https://www.youtube.com/playlist?list=PLdbXG0VpP0Mb4p5j_fUam-AX1btECUJNR\">YouTube Playlist</a>&nbsp;&nbsp;&nbsp;<a href=\"./archive/index.html\">Archived Lineups</a></p></div></div></body></html>";
+		const string lineupTemplate = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"/><link rel=\"icon\" type=\"image/x-icon\" href=\"/images/favicon.ico\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"stylesheet\" href=\"../../../style.css\"><title>#TITLE#</title></head><body><div class=\"exported-note\"><div class=\"exported-note-title\">#TITLE#</div><div id=\"rendered-md\">#TABLES#<h1 id=\"links\"><strong>Links</strong></h1><p><a title=\"https://riverabaseball.com\" href=\"https://riverabaseball.com\">Home</a>&nbsp;&nbsp;&nbsp;<a title=\"https://www.youtube.com/playlist?list=PLdbXG0VpP0Mb4p5j_fUam-AX1btECUJNR\" href=\"https://www.youtube.com/playlist?list=PLdbXG0VpP0Mb4p5j_fUam-AX1btECUJNR\">YouTube Playlist</a>&nbsp;&nbsp;&nbsp;<a href=\"./archive/index.html\">Archived Lineups</a></p></div></div></body></html>";
 
 		public static bool WriteLineupTable(string path, string outputFolder) {
 
@@ -24,10 +24,10 @@ namespace GameGenerator
 			return false;
 		}
 		public static void UpdateArchiveHtml(string path, string archivedHtml){
-			if(!Directory.Exists(path) || !File.Exists(archivedHtml)){
+			if(!File.Exists(path) || !File.Exists(archivedHtml)){
 				return;
 			}
-			var outputRow = "<tr><td><a href=\"#FILENAME#\">Lineup</a></td><td>#DATE#</td><td>#VISITOR#</td><td>#HOME#</td><td>0-0/td><td><a href=\"_blank\">Video</a></td><td></td></tr>";
+			var outputRow = "<tr><td><a href=\"#FILENAME#\">Lineup</a></td><td>#DATE#</td><td>#VISITOR#</td><td>#HOME#</td><td>0-0</td><td><a href=\"_blank\">Video</a></td><td></td></tr>";
 			var fileName = Path.GetFileName(archivedHtml);
 			var archiveFileName = Path.GetFileNameWithoutExtension(archivedHtml);
 			var detailsRegexp = new Regex("^Game\\s{1}[0-9]+\\s{1}(.*)\\s{1}Vs\\.\\s{1}(.*)\\((.*)\\).*");
@@ -43,7 +43,7 @@ namespace GameGenerator
 					home = "<img src=\"cubs.png\"/>";
 				}
 				var dateString = m.Groups[3].Value.Trim();
-				outputRow = outputRow.Replace("#FILENAME#",fileName).Replace("#VISITOR#",visitor).Replace("#HOME#",home).Replace("#DATE#<",dateString);
+				outputRow = outputRow.Replace("#FILENAME#",fileName).Replace("#VISITOR#",visitor).Replace("#HOME#",home).Replace("#DATE#",dateString);
 			}
 			var dom = XDocument.Load(path);
 			if (dom?.Root != null){
@@ -51,10 +51,10 @@ namespace GameGenerator
 				var tbodyNsp = nsp + "tbody";
 				var tBody = dom.Root.Descendants(tbodyNsp).FirstOrDefault();
 				if(tBody != null){
-					var newRow = XDocument.Parse(outputRow);
+					var newRow = XElement.Parse(outputRow);
 					tBody.Add(newRow);
 				}
-				System.Diagnostics.Debug.WriteLine(dom.ToString());
+				File.WriteAllText(path, dom.ToString());
 			}
 		}
 
