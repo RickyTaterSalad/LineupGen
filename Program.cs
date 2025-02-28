@@ -2,7 +2,7 @@
 using System.Text.RegularExpressions;
 
 Console.WriteLine("1 - Current Lineup (JOPLIN TABLE)");
-Console.WriteLine("2 - Archive Existing");
+Console.WriteLine("2 - Archive Current");
 var cmd = string.Empty;
 var retries = 10;
 var count = 0;
@@ -105,10 +105,12 @@ else if (cmd == "2")
 	var userProvidedPath = string.Empty;
 	while (!File.Exists(userProvidedPath) && count++ < retries)
 	{
-		Console.WriteLine("Path To Existing Lineup HTML:");
+		Console.WriteLine(@"Path To Existing Lineup HTML: (Default: C:\Github\BaseballWebsite\2025\Mustang\Cubs\index.html)");
 		userProvidedPath = Console.ReadLine();
+		if(string.IsNullOrWhiteSpace(userProvidedPath)){
+			userProvidedPath = @"C:\Github\BaseballWebsite\2025\Mustang\Cubs\index.html";
+		}
 	}
-	var gameTitle = string.Empty;
 	if (File.Exists(userProvidedPath))
 	{
 		var allText = File.ReadAllText(userProvidedPath);
@@ -120,18 +122,18 @@ else if (cmd == "2")
 			title = m.Groups[1].Value;
 		}
 		allText = allText.Replace("/archive/", "/").Replace("../style.css","../../style.css");
-
-		count = 0;
-		userProvidedPath = string.Empty;
-		while (!Directory.Exists(userProvidedPath) && count++ < retries)
-		{
-			Console.WriteLine("Output Directory:");
-			userProvidedPath = Console.ReadLine();
+		var archiveFolder = Path.Combine(Path.GetDirectoryName(userProvidedPath) ?? string.Empty, "archive");
+		var archiveIndex = Path.Combine(archiveFolder,"index.html");
+		if(!Directory.Exists(archiveFolder)){
+			Directory.CreateDirectory(archiveFolder);
 		}
-		if (Directory.Exists(userProvidedPath))
+		if (Directory.Exists(archiveFolder))
 		{
-			var outputFile = Path.Combine(userProvidedPath, $"{title}.html");
+			var outputFile = Path.Combine(archiveFolder, $"{title}.html");
 			File.WriteAllText(outputFile, allText);
+			if(File.Exists(archiveIndex)){
+				Parser.UpdateArchiveHtml(archiveIndex, outputFile);
+			}
 		}
 	}
 }

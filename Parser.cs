@@ -1,4 +1,7 @@
 ﻿
+using System.Text.RegularExpressions;
+using System.Xml.Linq;
+
 namespace GameGenerator
 {
 	public class Parser
@@ -19,6 +22,40 @@ namespace GameGenerator
 				}
 			}
 			return false;
+		}
+		public static void UpdateArchiveHtml(string path, string archivedHtml){
+			if(!Directory.Exists(path) || !File.Exists(archivedHtml)){
+				return;
+			}
+			var outputRow = "<tr><td><a href=\"#FILENAME#\">Lineup</a></td><td>#DATE#</td><td>#VISITOR#</td><td>#HOME#</td><td>0-0/td><td><a href=\"_blank\">Video</a></td><td></td></tr>";
+			var fileName = Path.GetFileName(archivedHtml);
+			var archiveFileName = Path.GetFileNameWithoutExtension(archivedHtml);
+			var detailsRegexp = new Regex("^Game\\s{1}[0-9]+\\s{1}(.*)\\s{1}Vs\\.\\s{1}(.*)\\((.*)\\).*");
+			var m = detailsRegexp.Match(archiveFileName);
+			if (m.Success && m.Groups.Count > 3)
+			{
+				var visitor = m.Groups[1].Value.Trim();
+				if(visitor.Equals("cubs",StringComparison.InvariantCultureIgnoreCase)){
+					visitor = "<img src=\"cubs.png\"/>";
+				}
+				var home = m.Groups[2].Value.Trim();
+				if(home.Equals("cubs",StringComparison.InvariantCultureIgnoreCase)){
+					home = "<img src=\"cubs.png\"/>";
+				}
+				var dateString = m.Groups[3].Value.Trim();
+				outputRow = outputRow.Replace("#FILENAME#",fileName).Replace("#VISITOR#",visitor).Replace("#HOME#",home).Replace("#DATE#<",dateString);
+			}
+			var dom = XDocument.Load(path);
+			if (dom?.Root != null){
+				var nsp = dom.Root.Name.Namespace;
+				var tbodyNsp = nsp + "tbody";
+				var tBody = dom.Root.Descendants(tbodyNsp).FirstOrDefault();
+				if(tBody != null){
+					var newRow = XDocument.Parse(outputRow);
+					tBody.Add(newRow);
+				}
+				System.Diagnostics.Debug.WriteLine(dom.ToString());
+			}
 		}
 
 		public static Tuple<string, string> ParseLineupFile(string path)
