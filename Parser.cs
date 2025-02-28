@@ -8,22 +8,54 @@ namespace GameGenerator
 	{
 		const string lineupTemplate = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"/><link rel=\"icon\" type=\"image/x-icon\" href=\"/images/favicon.ico\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"stylesheet\" href=\"../../../style.css\"><title>#TITLE#</title></head><body><div class=\"exported-note\"><div class=\"exported-note-title\">#TITLE#</div><div id=\"rendered-md\">#TABLES#<h1 id=\"links\"><strong>Links</strong></h1><p><a title=\"https://riverabaseball.com\" href=\"https://riverabaseball.com\">Home</a>&nbsp;&nbsp;&nbsp;<a title=\"https://www.youtube.com/playlist?list=PLdbXG0VpP0Mb4p5j_fUam-AX1btECUJNR\" href=\"https://www.youtube.com/playlist?list=PLdbXG0VpP0Mb4p5j_fUam-AX1btECUJNR\">YouTube Playlist</a>&nbsp;&nbsp;&nbsp;<a href=\"./archive/index.html\">Archived Lineups</a></p></div></div></body></html>";
 		const string picturesIndexTemplate = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\" /><link rel=\"icon\" type=\"image/x-icon\" href=\"/images/favicon.ico\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" /><link rel=\"stylesheet\" href=\"../../../../../style.css\"/><title>Pictures</title></head><body><div class=\"exported-note\"><div class=\"exported-note-title\">Pictures</div><div><h1 id=\"Pictures\"><strong>Pictures</strong></h1><div class=\"joplin-table-wrapper\"><table><thead><tr><th>Player</th></tr></thead><tbody><!--<tr>\r\n\t\t\t\t\t\t\t<td><a href=\"EthanRivera.jpg\">Ethan Rivera</a> </td>\r\n\t\t\t\t\t\t</tr>--></table></div><h1 id=\"links\"><strong>Links</strong></h1><p class=\"bottomLinks\"><a href=\"https://riverabaseball.com\">Home</a><a href=\"https://www.youtube.com/playlist?list=PLdbXG0VpP0Mb4p5j_fUam-AX1btECUJNR\">YouTube Playlist</a><a href=\"../../archive/index.html\">Archived Lineups</a></p></div></div></body></html>";
-		public static bool WriteLineupTable(string path, string outputFolder) {
+		public static bool WriteLineupTable(string path, string outputHTMLPath)
+		{
 
-			if (Directory.Exists(outputFolder))
+
+			var res = Parser.ParseLineupFile(path);
+			if (!string.IsNullOrWhiteSpace(res.Item1) && !string.IsNullOrWhiteSpace(res.Item2))
 			{
-				var res = Parser.ParseLineupFile(path);
-				if (!string.IsNullOrWhiteSpace(res.Item1) && !string.IsNullOrWhiteSpace(res.Item2))
+				if (File.Exists(outputHTMLPath))
 				{
-					var outFile = $"{res.Item1}.html";
-					var outHtml = Path.Combine(outputFolder, outFile);
-					File.WriteAllText(outHtml, res.Item2);
-					return true;
+					ArchiveHtmlFile(outputHTMLPath);
 				}
+				File.WriteAllText(outputHTMLPath, res.Item2);
+				return true;
 			}
 			return false;
 		}
-		public static void UpdateArchiveHtml(string path, string archivedHtml, string sourceHtmlPath){
+		public static void ArchiveHtmlFile(string htmlFile)
+		{
+			if (File.Exists(htmlFile))
+			{
+				var allText = File.ReadAllText(htmlFile);
+				var titleRegexp = new Regex("<title>(.*)<\\/title>");
+				var title = string.Empty;
+				var m = titleRegexp.Match(allText);
+				if (m.Success && m.Groups.Count > 1)
+				{
+					title = m.Groups[1].Value;
+				}
+				allText = allText.Replace("/archive/", "/").Replace("../style.css", "../../style.css");
+				var archiveFolder = Path.Combine(Path.GetDirectoryName(htmlFile) ?? string.Empty, "archive");
+				var archiveIndex = Path.Combine(archiveFolder, "index.html");
+				if (!Directory.Exists(archiveFolder))
+				{
+					Directory.CreateDirectory(archiveFolder);
+				}
+				if (Directory.Exists(archiveFolder))
+				{
+					var outputFile = Path.Combine(archiveFolder, $"{title}.html");
+					File.WriteAllText(outputFile, allText);
+					if (File.Exists(archiveIndex))
+					{
+						UpdateArchiveHtml(archiveIndex, outputFile, htmlFile);
+					}
+				}
+			}
+		}
+
+		private static void UpdateArchiveHtml(string path, string archivedHtml, string sourceHtmlPath){
 			if(!File.Exists(path) || !File.Exists(archivedHtml)){
 				return;
 			}

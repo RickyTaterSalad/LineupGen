@@ -7,6 +7,8 @@ var cmd = string.Empty;
 var retries = 10;
 var count = 0;
 
+const string defaultIndexHtml = "C:\\Github\\BaseballWebsite\\2025\\Mustang\\Cubs\\index.html";
+
 while (cmd != "1" && cmd != "2" && cmd != "3" && count++ < retries)
 {
 	cmd  = Console.ReadLine();
@@ -26,7 +28,7 @@ if (cmd == "1")
 		var title = string.Empty;
 		var joplinLines = File.ReadAllLines(joplinTextPath);
 		int curr = 0;
-		var lineupDict = new Dictionary<string, List<Tuple<string,string, string>>>();
+		var lineupDict = new Dictionary<string, List<Tuple<string, string, string>>>();
 		var currentDict = string.Empty;
 
 		foreach (var line in joplinLines)
@@ -46,7 +48,7 @@ if (cmd == "1")
 					currentDict = line[1..].Trim();
 					if (!lineupDict.ContainsKey(currentDict))
 					{
-						lineupDict.Add(currentDict,new List<Tuple<string, string, string>>());
+						lineupDict.Add(currentDict, new List<Tuple<string, string, string>>());
 					}
 				}
 				else
@@ -56,7 +58,7 @@ if (cmd == "1")
 					{
 						continue;
 					}
-					if (line.Contains("Order") && line.Contains("Name") && line.Contains("Number") &&  line.Contains("Position"))
+					if (line.Contains("Order") && line.Contains("Name") && line.Contains("Number") && line.Contains("Position"))
 					{
 						continue;
 					}
@@ -70,7 +72,7 @@ if (cmd == "1")
 							var position = m.Groups[3].Value.Trim();
 							if (lineupDict.ContainsKey(currentDict))
 							{
-								lineupDict[currentDict].Add(new Tuple<string,string,string>(player, number, position));
+								lineupDict[currentDict].Add(new Tuple<string, string, string>(player, number, position));
 
 							}
 						}
@@ -95,7 +97,20 @@ if (cmd == "1")
 		}
 		var tempFile = Path.GetTempFileName();
 		File.WriteAllLines(tempFile, lines);
-		Parser.WriteLineupTable(tempFile, Path.GetDirectoryName(joplinTextPath) ?? string.Empty);
+		Console.WriteLine($"Path To Existing Lineup HTML: (Default: {defaultIndexHtml})");
+		var outputHTMLPath = Console.ReadLine();
+		if (string.IsNullOrWhiteSpace(outputHTMLPath))
+		{
+			outputHTMLPath = defaultIndexHtml;
+		}
+		else
+		{
+			if (Directory.Exists(outputHTMLPath))
+			{
+				outputHTMLPath = Path.Combine(outputHTMLPath, "index.html");
+			}
+		}
+		Parser.WriteLineupTable(tempFile, outputHTMLPath);
 		File.Delete(tempFile);
 	}
 }
@@ -105,10 +120,11 @@ else if (cmd == "2")
 	var userProvidedPath = string.Empty;
 	while (!File.Exists(userProvidedPath) && count++ < retries)
 	{
-		Console.WriteLine(@"Path To Existing Lineup HTML: (Default: C:\Github\BaseballWebsite\2025\Mustang\Cubs\index.html)");
+		Console.WriteLine($"Path To Existing Lineup HTML: (Default: {defaultIndexHtml})");
 		userProvidedPath = Console.ReadLine();
-		if(string.IsNullOrWhiteSpace(userProvidedPath)){
-			userProvidedPath = @"C:\Github\BaseballWebsite\2025\Mustang\Cubs\index.html";
+		if (string.IsNullOrWhiteSpace(userProvidedPath))
+		{
+			userProvidedPath = defaultIndexHtml;
 		}
 		else
 		{
@@ -120,27 +136,6 @@ else if (cmd == "2")
 	}
 	if (File.Exists(userProvidedPath))
 	{
-		var allText = File.ReadAllText(userProvidedPath);
-		var titleRegexp = new Regex("<title>(.*)<\\/title>");
-		var title = string.Empty;
-		var m = titleRegexp.Match(allText);
-		if (m.Success && m.Groups.Count > 1)
-		{
-			title = m.Groups[1].Value;
-		}
-		allText = allText.Replace("/archive/", "/").Replace("../style.css","../../style.css");
-		var archiveFolder = Path.Combine(Path.GetDirectoryName(userProvidedPath) ?? string.Empty, "archive");
-		var archiveIndex = Path.Combine(archiveFolder,"index.html");
-		if(!Directory.Exists(archiveFolder)){
-			Directory.CreateDirectory(archiveFolder);
-		}
-		if (Directory.Exists(archiveFolder))
-		{
-			var outputFile = Path.Combine(archiveFolder, $"{title}.html");
-			File.WriteAllText(outputFile, allText);
-			if(File.Exists(archiveIndex)){
-				Parser.UpdateArchiveHtml(archiveIndex, outputFile, userProvidedPath);
-			}
-		}
+		Parser.ArchiveHtmlFile(userProvidedPath);
 	}
 }
