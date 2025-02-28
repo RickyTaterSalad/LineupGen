@@ -12,7 +12,9 @@ namespace GameGenerator
 				var res = Parser.ParseLineupFile(path);
 				if (!string.IsNullOrWhiteSpace(res.Item1) && !string.IsNullOrWhiteSpace(res.Item2))
 				{
-					File.WriteAllText(Path.Combine(outputFolder, $"{res.Item1}.html"), res.Item2);
+					var outFile = $"{res.Item1}.html";
+					var outHtml = Path.Combine(outputFolder, outFile);
+					File.WriteAllText(outHtml, res.Item2);
 					return true;
 				}
 			}
@@ -41,14 +43,14 @@ namespace GameGenerator
 						{
 							tableHtml += "</tbody></table>";
 						}
-						tableHtml += $"<h1 id=\"{trimmed[1..]}\"><strong>{trimmed[1..]}</strong></h1><div class=\"joplin-table-wrapper\"><table><thead><tr><th>Order</th><th>Name</th><th>Position</th></tr></thead><tbody>";
+						tableHtml += $"<h1 id=\"{trimmed[1..]}\"><strong>{trimmed[1..]}</strong></h1><div class=\"joplin-table-wrapper\"><table><thead><tr><th>Order</th><th>Name</th><th>Number</th><th>Position</th></tr></thead><tbody>";
 					}
 					else
 					{
 						var split = trimmed.Split(';');
-						if (split.Length > 1)
+						if (split.Length > 2)
 						{
-							tableHtml += $"<tr><td>{currentOrder++}</td><td>{split[0]}</td><td>{split[1]}</td></tr>";
+							tableHtml += $"<tr><td>{currentOrder++}</td><td>{split[0]}</td><td>{split[1]}</td><td>{split[2]}</td></tr>";
 						}
 					}
 				}
