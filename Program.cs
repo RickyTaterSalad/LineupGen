@@ -139,7 +139,7 @@ else if (cmd == "2")
 			var outputFile = Path.Combine(archiveFolder, $"{title}.html");
 			File.WriteAllText(outputFile, allText);
 			if(File.Exists(archiveIndex)){
-				Parser.UpdateArchiveHtml(archiveIndex, outputFile);
+				Parser.UpdateArchiveHtml(archiveIndex, outputFile, userProvidedPath);
 			}
 		}
 	}
