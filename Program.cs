@@ -20,7 +20,7 @@ if (cmd == "1")
 	var joplinTextPath = string.Empty;
 	while (!File.Exists(joplinTextPath) && count++ < retries)
 	{
-		Console.WriteLine($"Path To Joplin Export (Default:{defaultJoplinExport})");
+		Console.WriteLine($"Path To Joplin Export (Default: {defaultJoplinExport})");
 		joplinTextPath = Console.ReadLine();
 		if (String.IsNullOrWhiteSpace(joplinTextPath))
 		{
