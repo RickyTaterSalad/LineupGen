@@ -8,6 +8,7 @@ var retries = 10;
 var count = 0;
 
 const string defaultIndexHtml = "C:\\Github\\BaseballWebsite\\2025\\Mustang\\Cubs\\index.html";
+const string defaultJoplinExport = "C:\\JoplinExports";
 
 while (cmd != "1" && cmd != "2" && cmd != "3" && count++ < retries)
 {
@@ -19,8 +20,16 @@ if (cmd == "1")
 	var joplinTextPath = string.Empty;
 	while (!File.Exists(joplinTextPath) && count++ < retries)
 	{
-		Console.WriteLine("Path To Joplin Text:");
+		Console.WriteLine($"Path To Joplin Export (Default:{defaultJoplinExport})");
 		joplinTextPath = Console.ReadLine();
+		if (String.IsNullOrWhiteSpace(joplinTextPath))
+		{
+			joplinTextPath = defaultJoplinExport;
+		}
+		if (Directory.Exists(joplinTextPath))
+		{
+			joplinTextPath = new DirectoryInfo(joplinTextPath).GetFiles().OrderByDescending(f => f.LastWriteTime).FirstOrDefault()?.FullName;
+		}
 	}
 	if (File.Exists(joplinTextPath))
 	{
