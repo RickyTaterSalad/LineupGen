@@ -1,6 +1,6 @@
 @echo off
-LineupGen.exe "C:\Github\BaseballLineups"
-LineupGen.exe "publish"
+C:\Github\LineupGen\bin\Release\net9.0\LineupGen.exe "C:\Github\BaseballLineups"
+C:\Github\LineupGen\bin\Release\net9.0\LineupGen.exe "publish"
 cd "C:\Github\BaseballWebsite"
 SET MSG=Insert Lineup %DATE:~-4%_%DATE:~4,2%_%DATE:~7,2%_%TIME:~0,2%_%TIME:~3,2%_%TIME:~6,2%
 git checkout main
