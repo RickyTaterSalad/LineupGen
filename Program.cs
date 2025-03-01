@@ -8,11 +8,24 @@ var retries = 10;
 var count = 0;
 
 const string defaultIndexHtml = "C:\\Github\\BaseballWebsite\\2025\\Mustang\\Cubs\\index.html";
-const string defaultJoplinExport = "C:\\JoplinExports";
 
-while (cmd != "1" && cmd != "2" && cmd != "3" && count++ < retries)
-{
-	cmd  = Console.ReadLine();
+var isSilentMode = false;
+
+foreach (var arg in args){
+	if(!isSilentMode && "silent".Equals(arg,StringComparison.InvariantCultureIgnoreCase)){
+		isSilentMode = true;
+	}
+}
+
+if(!isSilentMode){
+	while (cmd != "1" && cmd != "2" && cmd != "3" && count++ < retries)
+	{
+		cmd  = Console.ReadLine();
+	}
+}
+else{
+	//silent
+	cmd = "1";
 }
 count = 0;
 if (cmd == "1")
@@ -20,17 +33,23 @@ if (cmd == "1")
 	var joplinTextPath = string.Empty;
 	while (!File.Exists(joplinTextPath) && count++ < retries)
 	{
-		Console.WriteLine($"Path To Joplin Export (Default: {defaultJoplinExport})");
-		joplinTextPath = Console.ReadLine();
+		Console.WriteLine($"Path to .md table export directory (default: {Parser.defaultLineupProcessingFolder})");
+		if(!isSilentMode){
+			joplinTextPath = Console.ReadLine();
+		}
 		if (String.IsNullOrWhiteSpace(joplinTextPath))
 		{
-			joplinTextPath = defaultJoplinExport;
+			joplinTextPath = Parser.defaultLineupProcessingFolder;
 		}
 		if (Directory.Exists(joplinTextPath))
 		{
-			joplinTextPath = new DirectoryInfo(joplinTextPath).GetFiles().OrderByDescending(f => f.LastWriteTime).FirstOrDefault()?.FullName;
+			joplinTextPath = new DirectoryInfo(joplinTextPath).GetFiles("*.md").OrderByDescending(f => f.LastWriteTime).FirstOrDefault()?.FullName;
+		}
+		if(isSilentMode){
+			break;
 		}
 	}
+
 	if (File.Exists(joplinTextPath))
 	{
 		var tableRowRegexp = new Regex("\\|[0-9\\s]+\\|(.*)\\|(.*)\\|(.*)\\|");
@@ -107,7 +126,10 @@ if (cmd == "1")
 		var tempFile = Path.GetTempFileName();
 		File.WriteAllLines(tempFile, lines);
 		Console.WriteLine($"Path To Existing Lineup HTML: (Default: {defaultIndexHtml})");
-		var outputHTMLPath = Console.ReadLine();
+		var outputHTMLPath = string.Empty;
+		if(!isSilentMode){
+			outputHTMLPath = Console.ReadLine();
+		}
 		if (string.IsNullOrWhiteSpace(outputHTMLPath))
 		{
 			outputHTMLPath = defaultIndexHtml;
@@ -122,6 +144,8 @@ if (cmd == "1")
 		Parser.WriteLineupTable(tempFile, outputHTMLPath);
 		File.Delete(tempFile);
 	}
+	Console.WriteLine("Complete... Press enter to exit.");
+	Console.ReadKey();
 }
 
 else if (cmd == "2")
@@ -130,7 +154,9 @@ else if (cmd == "2")
 	while (!File.Exists(userProvidedPath) && count++ < retries)
 	{
 		Console.WriteLine($"Path To Existing Lineup HTML: (Default: {defaultIndexHtml})");
-		userProvidedPath = Console.ReadLine();
+		if(!isSilentMode){
+			userProvidedPath = Console.ReadLine();
+		}
 		if (string.IsNullOrWhiteSpace(userProvidedPath))
 		{
 			userProvidedPath = defaultIndexHtml;
@@ -142,9 +168,14 @@ else if (cmd == "2")
 				userProvidedPath = Path.Combine(userProvidedPath, "index.html");
 			}
 		}
+		if(isSilentMode){
+			break;
+		}
 	}
 	if (File.Exists(userProvidedPath))
 	{
 		Parser.ArchiveHtmlFile(userProvidedPath);
-	}
+	}	
+	Console.WriteLine("Complete... Press enter to exit.");
+	Console.ReadKey();
 }

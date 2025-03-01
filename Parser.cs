@@ -1,4 +1,5 @@
 ﻿
+
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
@@ -6,12 +7,12 @@ namespace GameGenerator
 {
 	public class Parser
 	{
+		public const string defaultLineupProcessingFolder = "C:\\JoplinExports";
+
 		const string lineupTemplate = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"/><link rel=\"icon\" type=\"image/x-icon\" href=\"/images/favicon.ico\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"stylesheet\" href=\"../../../style.css\"><title>#TITLE#</title></head><body><div class=\"exported-note\"><div class=\"exported-note-title\">#TITLE#</div><div id=\"rendered-md\">#TABLES#<h1 id=\"links\"><strong>Links</strong></h1><p><a title=\"https://riverabaseball.com\" href=\"https://riverabaseball.com\">Home</a>&nbsp;&nbsp;&nbsp;<a title=\"https://www.youtube.com/playlist?list=PLdbXG0VpP0Mb4p5j_fUam-AX1btECUJNR\" href=\"https://www.youtube.com/playlist?list=PLdbXG0VpP0Mb4p5j_fUam-AX1btECUJNR\">YouTube Playlist</a>&nbsp;&nbsp;&nbsp;<a href=\"./archive/index.html\">Archived Lineups</a></p></div></div></body></html>";
 		const string picturesIndexTemplate = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\" /><link rel=\"icon\" type=\"image/x-icon\" href=\"/images/favicon.ico\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" /><link rel=\"stylesheet\" href=\"../../../../../style.css\"/><title>Pictures</title></head><body><div class=\"exported-note\"><div><h1 id=\"Pictures\"><strong>Pictures</strong></h1><div class=\"joplin-table-wrapper\"><table><thead><tr><th>Player</th></tr></thead><tbody><!--<tr>\r\n\t\t\t\t\t\t\t<td><a href=\"EthanRivera.jpg\">Ethan Rivera</a> </td>\r\n\t\t\t\t\t\t</tr>--></table></div><h1 id=\"links\"><strong>Links</strong></h1><p class=\"bottomLinks\"><a href=\"https://riverabaseball.com\">Home</a><a href=\"https://www.youtube.com/playlist?list=PLdbXG0VpP0Mb4p5j_fUam-AX1btECUJNR\">YouTube Playlist</a><a href=\"../../archive/index.html\">Archived Lineups</a></p></div></div></body></html>";
 		public static bool WriteLineupTable(string path, string outputHTMLPath)
 		{
-
-
 			var res = Parser.ParseLineupFile(path);
 			if (!string.IsNullOrWhiteSpace(res.Item1) && !string.IsNullOrWhiteSpace(res.Item2))
 			{
@@ -45,40 +46,51 @@ namespace GameGenerator
 				}
 				if (Directory.Exists(archiveFolder))
 				{
-					var outputFile = Path.Combine(archiveFolder, $"{title}.html");
-					File.WriteAllText(outputFile, allText);
-					if (File.Exists(archiveIndex))
+					//create game folder, if it exists this has alread been archived
+					var outputFolder = Path.Combine(archiveFolder, title);
+					if (!Directory.Exists(outputFolder))
 					{
-						UpdateArchiveHtml(archiveIndex, outputFile, htmlFile);
+						Directory.CreateDirectory(outputFolder);
+						if (Directory.Exists(outputFolder))
+						{
+							var outputFile = Path.Combine(outputFolder, "index.html");
+							File.WriteAllText(outputFile, allText);
+							if (File.Exists(archiveIndex))
+							{
+								UpdateArchiveHtml(archiveIndex, title, "index.html", htmlFile);
+							}
+						}
 					}
 				}
 			}
 		}
 
-		private static void UpdateArchiveHtml(string path, string archivedHtml, string sourceHtmlPath){
-			if(!File.Exists(path) || !File.Exists(archivedHtml)){
+		private static void UpdateArchiveHtml(string path, string archivedGameFolderName, string outputHtmlFileName, string sourceHtmlPath)
+		{
+			if (!File.Exists(path))
+			{
 				return;
 			}
 			var rootDir = Path.GetDirectoryName(sourceHtmlPath) ?? string.Empty;
 			var picturesDir = Path.Combine(rootDir, "pictures");
-			var archiveFileNameNoExtension = Path.GetFileNameWithoutExtension(archivedHtml);
-			var archivedPicturesDirToCreate = Path.Combine(picturesDir, archiveFileNameNoExtension);
-			var outputRow = $"<tr><td><a href=\"#FILENAME#\">Lineup</a></td><td>#DATE#</td><td>#VISITOR#</td><td>#HOME#</td><td>0-0</td><td><a href=\"_blank\">Video</a></td><td><a href=\"../pictures/{archiveFileNameNoExtension}/index.html\">Pictures</a></td></tr>";
-			var fileName = Path.GetFileName(archivedHtml);
+			var archivedPicturesDirToCreate = Path.Combine(picturesDir, archivedGameFolderName);
+			var outputRow = $"<tr><td><a href=\"./{archivedGameFolderName}/{outputHtmlFileName}\">Lineup</a></td><td>#DATE#</td><td>#VISITOR#</td><td>#HOME#</td><td>0-0</td><td><a href=\"_blank\">Video</a></td><td><a href=\"../pictures/{archivedGameFolderName}/index.html\">Pictures</a></td><td><ul class=\"archiveNoteList\"></ul></td></tr>";
 			var detailsRegexp = new Regex("^Game\\s{1}[0-9]+\\s{1}(.*)\\s{1}Vs\\.\\s{1}(.*)\\((.*)\\).*");
-			var m = detailsRegexp.Match(archiveFileNameNoExtension);
+			var m = detailsRegexp.Match(archivedGameFolderName);
 			if (m.Success && m.Groups.Count > 3)
 			{
 				var visitor = m.Groups[1].Value.Trim();
-				if(visitor.Equals("cubs",StringComparison.InvariantCultureIgnoreCase)){
+				if (visitor.Equals("cubs", StringComparison.InvariantCultureIgnoreCase))
+				{
 					visitor = "<img src=\"cubs.png\"/>";
 				}
 				var home = m.Groups[2].Value.Trim();
-				if(home.Equals("cubs",StringComparison.InvariantCultureIgnoreCase)){
+				if (home.Equals("cubs", StringComparison.InvariantCultureIgnoreCase))
+				{
 					home = "<img src=\"cubs.png\"/>";
 				}
 				var dateString = m.Groups[3].Value.Trim();
-				outputRow = outputRow.Replace("#FILENAME#",fileName).Replace("#VISITOR#",visitor).Replace("#HOME#",home).Replace("#DATE#",dateString);
+				outputRow = outputRow.Replace("#VISITOR#", visitor).Replace("#HOME#", home).Replace("#DATE#", dateString);
 			}
 			var dom = XDocument.Load(path);
 			if (dom?.Root != null)
@@ -152,7 +164,7 @@ namespace GameGenerator
 					}
 				}
 				tableHtml += "</tbody></table>";
-				return new Tuple<string,string>(gameTitle, lineupTemplate.Replace("#TITLE#", gameTitle).Replace("#TABLES#", tableHtml));
+				return new Tuple<string, string>(gameTitle, lineupTemplate.Replace("#TITLE#", gameTitle).Replace("#TABLES#", tableHtml));
 			}
 			return new Tuple<string, string>(string.Empty, string.Empty);
 		}
