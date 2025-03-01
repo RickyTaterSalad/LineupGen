@@ -1,31 +1,59 @@
 ﻿using GameGenerator;
 using System.Text.RegularExpressions;
 
-Console.WriteLine("1 - Current Lineup (JOPLIN TABLE)");
-Console.WriteLine("2 - Archive Current");
+
 var cmd = string.Empty;
 var retries = 10;
 var count = 0;
+const string defaultWebsiteRoot = "C:\\Github\\BaseballWebsite";
 
 const string defaultIndexHtml = "C:\\Github\\BaseballWebsite\\2025\\Mustang\\Cubs\\index.html";
 
+var directoryArg = string.Empty;
 var isSilentMode = false;
+var isScriptMode = false;
+var isPublishMode = false;
+var isTakeLineupOfflineMode = false;
 
 foreach (var arg in args){
+	if(Directory.Exists(arg)){
+		directoryArg = arg;
+		isSilentMode = isScriptMode = true;
+		break;
+	}
 	if(!isSilentMode && "silent".Equals(arg,StringComparison.InvariantCultureIgnoreCase)){
+		Console.WriteLine("Silent Mode");
 		isSilentMode = true;
 	}
+	if(!isScriptMode && "script".Equals(arg,StringComparison.InvariantCultureIgnoreCase)){
+		Console.WriteLine("Script Mode");
+		isScriptMode = true;
+	}
+	if(!isPublishMode && "publish".Equals(arg,StringComparison.InvariantCultureIgnoreCase)){
+		Console.WriteLine("Publish Mode");
+		isPublishMode = true;
+	}
+	if(!isTakeLineupOfflineMode && "offline".Equals(arg,StringComparison.InvariantCultureIgnoreCase)){
+		Console.WriteLine("Offline Mode");
+		isTakeLineupOfflineMode = true;
+	}
 }
+isSilentMode = isSilentMode || isScriptMode || isPublishMode || isTakeLineupOfflineMode;
+
 
 if(!isSilentMode){
-	while (cmd != "1" && cmd != "2" && cmd != "3" && count++ < retries)
+	Console.WriteLine("1 - Current Lineup (JOPLIN TABLE)");
+	Console.WriteLine("2 - Archive Current");
+	Console.WriteLine("3 - Publish Lineup");
+	Console.WriteLine("4 - Take Lineup Offline");
+	while (cmd != "1" && cmd != "2" && count++ < retries)
 	{
 		cmd  = Console.ReadLine();
 	}
 }
 else{
 	//silent
-	cmd = "1";
+	cmd = isPublishMode ? "3": (isTakeLineupOfflineMode ? "4" :"1");
 }
 count = 0;
 if (cmd == "1")
@@ -37,9 +65,9 @@ if (cmd == "1")
 		if(!isSilentMode){
 			joplinTextPath = Console.ReadLine();
 		}
-		if (String.IsNullOrWhiteSpace(joplinTextPath))
+		if (string.IsNullOrWhiteSpace(joplinTextPath))
 		{
-			joplinTextPath = Parser.defaultLineupProcessingFolder;
+			joplinTextPath = !string.IsNullOrWhiteSpace(directoryArg) ? directoryArg : Parser.defaultLineupProcessingFolder;
 		}
 		if (Directory.Exists(joplinTextPath))
 		{
@@ -52,6 +80,7 @@ if (cmd == "1")
 
 	if (File.Exists(joplinTextPath))
 	{
+		Console.WriteLine($"Using Table File: " + joplinTextPath);
 		var tableRowRegexp = new Regex("\\|[0-9\\s]+\\|(.*)\\|(.*)\\|(.*)\\|");
 		var title = string.Empty;
 		var joplinLines = File.ReadAllLines(joplinTextPath);
@@ -125,9 +154,9 @@ if (cmd == "1")
 		}
 		var tempFile = Path.GetTempFileName();
 		File.WriteAllLines(tempFile, lines);
-		Console.WriteLine($"Path To Existing Lineup HTML: (Default: {defaultIndexHtml})");
 		var outputHTMLPath = string.Empty;
 		if(!isSilentMode){
+			Console.WriteLine($"Path To Existing Lineup HTML: (Default: {defaultIndexHtml})");
 			outputHTMLPath = Console.ReadLine();
 		}
 		if (string.IsNullOrWhiteSpace(outputHTMLPath))
@@ -144,8 +173,6 @@ if (cmd == "1")
 		Parser.WriteLineupTable(tempFile, outputHTMLPath);
 		File.Delete(tempFile);
 	}
-	Console.WriteLine("Complete... Press enter to exit.");
-	Console.ReadKey();
 }
 
 else if (cmd == "2")
@@ -176,6 +203,42 @@ else if (cmd == "2")
 	{
 		Parser.ArchiveHtmlFile(userProvidedPath);
 	}	
-	Console.WriteLine("Complete... Press enter to exit.");
-	Console.ReadKey();
+	if(!isSilentMode){
+		Console.WriteLine("Complete... Press enter to exit.");
+		Console.ReadLine();
+	}
+}
+else if (cmd == "3" || cmd == "4")
+{
+	Console.WriteLine("Replacing root index.html....");
+	var websiteRoot = string.Empty;
+	while (!File.Exists(websiteRoot) && count++ < retries)
+	{
+		if(!isSilentMode){
+			Console.WriteLine($"Path To Website Root: (Default: {defaultWebsiteRoot})");
+			websiteRoot = Console.ReadLine();
+		}
+		if (string.IsNullOrWhiteSpace(websiteRoot))
+		{
+			websiteRoot = defaultWebsiteRoot;
+		}
+		if(isSilentMode){
+			break;
+		}
+	}
+	if (Directory.Exists(defaultWebsiteRoot))
+	{
+		var idxToCopy = cmd == "3" ? "index_lineup.html" : "index_no_lineup.html";
+		var templateFile = Path.Combine(defaultWebsiteRoot,"templates",idxToCopy);
+		Console.WriteLine($"Template: {templateFile}");
+		if(File.Exists(templateFile)){
+			Console.WriteLine($"Copying...");
+			File.Copy(templateFile,Path.Combine(websiteRoot,"index.html"),true);
+			Console.WriteLine($"Copied.");
+		}
+	}
+	if(!isSilentMode){
+		Console.WriteLine("Complete... Press enter to exit.");
+		Console.ReadLine();
+	}
 }
