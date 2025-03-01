@@ -37,7 +37,7 @@ namespace GameGenerator
 				{
 					title = m.Groups[1].Value;
 				}
-				allText = allText.Replace("/archive/", "/").Replace("../style.css", "../../style.css");
+				allText = allText.Replace("./archive/index.html", "../index.html").Replace("../style.css", "../../../style.css");
 				var archiveFolder = Path.Combine(Path.GetDirectoryName(htmlFile) ?? string.Empty, "archive");
 				var archiveIndex = Path.Combine(archiveFolder, "index.html");
 				if (!Directory.Exists(archiveFolder))
