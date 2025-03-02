@@ -14,6 +14,42 @@ namespace GameGenerator
 		const string noCacheMeta = "<meta http-equiv=\"Cache-Control\" content=\"no-cache, no-store, must-revalidate\"/><meta http-equiv=\"Pragma\" content=\"no-cache\"/><meta http-equiv=\"Expires\" content=\"0\"/>";
 		const string lineupTemplate = "<!DOCTYPE html><html lang=\"en\"><head>#NO_CACHE_META#<meta charset=\"UTF-8\"/><link rel=\"icon\" type=\"image/x-icon\" href=\"/images/favicon.ico\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"stylesheet\" href=\"../../../style.css\"><title>#TITLE#</title></head><body><div class=\"exported-note\"><div class=\"exported-note-title\">#TITLE#</div><div id=\"rendered-md\">#TABLES#<h1 id=\"links\"><strong>Links</strong></h1><p><a title=\"https://riverabaseball.com\" href=\"https://riverabaseball.com\">Home</a>&nbsp;&nbsp;&nbsp;<a title=\"https://www.youtube.com/playlist?list=PLdbXG0VpP0Mb4p5j_fUam-AX1btECUJNR\" href=\"https://www.youtube.com/playlist?list=PLdbXG0VpP0Mb4p5j_fUam-AX1btECUJNR\">YouTube Playlist</a>&nbsp;&nbsp;&nbsp;<a href=\"./archive/index.html\">Archived Lineups</a></p></div></div></body></html>";
 		const string picturesIndexTemplate = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\" /><link rel=\"icon\" type=\"image/x-icon\" href=\"/images/favicon.ico\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" /><link rel=\"stylesheet\" href=\"../../../../../style.css\"/><title>Pictures</title></head><body><div class=\"exported-note\"><div><h1 id=\"Pictures\"><strong>Pictures</strong></h1><div class=\"joplin-table-wrapper\"><table><thead><tr><th>Player</th></tr></thead><tbody><!--<tr>\r\n\t\t\t\t\t\t\t<td><a href=\"EthanRivera.jpg\">Ethan Rivera</a> </td>\r\n\t\t\t\t\t\t</tr>--></table></div><h1 id=\"links\"><strong>Links</strong></h1><p class=\"bottomLinks\"><a href=\"https://riverabaseball.com\">Home</a><a href=\"https://www.youtube.com/playlist?list=PLdbXG0VpP0Mb4p5j_fUam-AX1btECUJNR\">YouTube Playlist</a><a href=\"../../archive/index.html\">Archived Lineups</a></p></div></div></body></html>";
+	
+	
+	public static void UpdateLatestArchiveEntryWithYoutubeLink(string youtubeLink,string teamWebsiteRoot){
+		Console.WriteLine("UpdateLatestArchiveEntryWithYoutubeLink");
+		//teamWebsiteRoot - C:\Github\BaseballWebsite\2025\Mustang\Cubs
+		var archiveFolder = Path.Combine(teamWebsiteRoot ?? string.Empty, "archive");
+		var archiveIndex = Path.Combine(archiveFolder, "index.html");
+		var dom = XDocument.Load(archiveIndex);
+		var linkUpdated = false;
+		if (dom?.Root != null)
+		{
+			Console.WriteLine("UpdateLatestArchiveEntryWithYoutubeLink:ParsingDOM");
+			var nsp = dom.Root.Name.Namespace;
+			var trNsp = nsp + "tr";
+			var aNsp = nsp + "a";
+			var lastRowLinks = dom.Root.Descendants(trNsp).LastOrDefault()?.Descendants(aNsp)?.Reverse() ?? Enumerable.Empty<XElement>();
+			foreach(var link in lastRowLinks){
+				Console.WriteLine("UpdateLatestArchiveEntryWithYoutubeLink:LinkLoop");
+				if("Video".Equals(link.Value)){
+					if("_blank".Equals(link.Attribute("href")?.Value)){
+						link.SetAttributeValue("href",youtubeLink);
+						linkUpdated = true;
+						break;
+					}
+				}
+			}
+			if(linkUpdated){
+				Console.WriteLine("UpdateLatestArchiveEntryWithYoutubeLink:linkUpdated");
+				File.WriteAllText(archiveIndex, dom.ToString());
+			}
+			else{
+				Console.WriteLine("UpdateLatestArchiveEntryWithYoutubeLink:linkNotUpdated");
+			}
+		}
+
+	}
 		public static bool WriteLineupTable(string path, string outputHTMLPath)
 		{
 			Console.WriteLine("WriteLineupTable");

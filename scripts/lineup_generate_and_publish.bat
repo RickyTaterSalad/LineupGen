@@ -1,10 +1,16 @@
 @echo off
-C:\Github\LineupGen\bin\Release\net9.0\LineupGen.exe "C:\Github\BaseballLineups"
-C:\Github\LineupGen\bin\Release\net9.0\LineupGen.exe "publish"
-cd "C:\Github\BaseballWebsite"
-SET MSG=Insert Lineup %DATE:~-4%_%DATE:~4,2%_%DATE:~7,2%_%TIME:~0,2%_%TIME:~3,2%_%TIME:~6,2%
-git checkout main
+set SCRIPTS_DIR=C:\Github\LineupGen\scripts
+set LINEUP_DIR=C:\Github\BaseballLineups
+set WEBSITE_DIR=C:\Github\BaseballWebsite
+set LINEUP_GEN_EXE=C:\Github\LineupGen\bin\Release\net9.0\LineupGen.exe
+
+rem pull latest lineups
+cd "%LINEUP_DIR%"
 git pull
-git add .
-git commit -a -m "Insert Lineup %MSG%"
-git push
+
+rem generate new lineup
+%LINEUP_GEN_EXE% "%LINEUP_DIR%"
+
+%SCRIPTS_DIR%\lineup_publish.bat
+
+set OG_DIR="%cd%"

@@ -10,16 +10,22 @@ const string defaultWebsiteRoot = "C:\\Github\\BaseballWebsite";
 const string defaultIndexHtml = "C:\\Github\\BaseballWebsite\\2025\\Mustang\\Cubs\\index.html";
 
 var directoryArg = string.Empty;
+var linkArg = string.Empty;
 var isSilentMode = false;
 var isScriptMode = false;
 var isPublishMode = false;
 var isTakeLineupOfflineMode = false;
+var isSetYoutubeLinkMode = false;
 
 foreach (var arg in args){
 	if(Directory.Exists(arg)){
 		directoryArg = arg;
 		isSilentMode = isScriptMode = true;
 		break;
+	}
+	if(arg?.StartsWith("http") ?? false){
+		Console.WriteLine($"URL Passed: {arg}");
+		linkArg = arg;
 	}
 	if(!isSilentMode && "silent".Equals(arg,StringComparison.InvariantCultureIgnoreCase)){
 		Console.WriteLine("Silent Mode");
@@ -37,8 +43,13 @@ foreach (var arg in args){
 		Console.WriteLine("Offline Mode");
 		isTakeLineupOfflineMode = true;
 	}
+	if(!isSetYoutubeLinkMode && "youtube".Equals(arg,StringComparison.InvariantCultureIgnoreCase)){
+		Console.WriteLine("Youtube Link Mode");
+		isSetYoutubeLinkMode = true;
+	}
+	
 }
-isSilentMode = isSilentMode || isScriptMode || isPublishMode || isTakeLineupOfflineMode;
+isSilentMode = isSilentMode || isScriptMode || isPublishMode || isTakeLineupOfflineMode || isSetYoutubeLinkMode;
 
 
 if(!isSilentMode){
@@ -53,7 +64,7 @@ if(!isSilentMode){
 }
 else{
 	//silent
-	cmd = isPublishMode ? "3": (isTakeLineupOfflineMode ? "4" :"1");
+	cmd = isPublishMode ? "3": (isTakeLineupOfflineMode ? "4" : isSetYoutubeLinkMode ? "5": "1");
 }
 count = 0;
 if (cmd == "1")
@@ -241,4 +252,12 @@ else if (cmd == "3" || cmd == "4")
 		Console.WriteLine("Complete... Press enter to exit.");
 		Console.ReadLine();
 	}
+}
+else if (cmd == "5")
+{
+	//set youtube link on latest archived lineup
+	if(string.IsNullOrWhiteSpace(linkArg)){
+		return;
+	}
+	Parser.UpdateLatestArchiveEntryWithYoutubeLink(linkArg, Path.GetDirectoryName(defaultIndexHtml) ?? string.Empty);
 }
