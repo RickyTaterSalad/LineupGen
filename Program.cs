@@ -16,7 +16,7 @@ var isScriptMode = false;
 var isPublishMode = false;
 var isTakeLineupOfflineMode = false;
 var isSetYoutubeLinkMode = false;
-
+var isArchiveMode = false;
 foreach (var arg in args){
 	if(Directory.Exists(arg)){
 		directoryArg = arg;
@@ -47,9 +47,13 @@ foreach (var arg in args){
 		Console.WriteLine("Youtube Link Mode");
 		isSetYoutubeLinkMode = true;
 	}
+		if(!isArchiveMode && "archive".Equals(arg,StringComparison.InvariantCultureIgnoreCase)){
+		Console.WriteLine("Archive Mode");
+		isArchiveMode = true;
+	}
 	
 }
-isSilentMode = isSilentMode || isScriptMode || isPublishMode || isTakeLineupOfflineMode || isSetYoutubeLinkMode;
+isSilentMode = isSilentMode || isScriptMode || isPublishMode || isTakeLineupOfflineMode || isSetYoutubeLinkMode || isArchiveMode;
 
 
 if(!isSilentMode){
@@ -64,7 +68,7 @@ if(!isSilentMode){
 }
 else{
 	//silent
-	cmd = isPublishMode ? "3": (isTakeLineupOfflineMode ? "4" : isSetYoutubeLinkMode ? "5": "1");
+	cmd = isPublishMode ? "3": (isTakeLineupOfflineMode ? "4" : isSetYoutubeLinkMode ? "5": isArchiveMode ? "2" : "1");
 }
 count = 0;
 if (cmd == "1")
@@ -191,8 +195,8 @@ else if (cmd == "2")
 	var userProvidedPath = string.Empty;
 	while (!File.Exists(userProvidedPath) && count++ < retries)
 	{
-		Console.WriteLine($"Path To Existing Lineup HTML: (Default: {defaultIndexHtml})");
 		if(!isSilentMode){
+			Console.WriteLine($"Path To Existing Lineup HTML: (Default: {defaultIndexHtml})");
 			userProvidedPath = Console.ReadLine();
 		}
 		if (string.IsNullOrWhiteSpace(userProvidedPath))
@@ -219,6 +223,7 @@ else if (cmd == "2")
 		Console.ReadLine();
 	}
 }
+
 else if (cmd == "3" || cmd == "4")
 {
 	Console.WriteLine("Replacing root index.html....");
