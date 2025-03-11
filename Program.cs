@@ -216,7 +216,8 @@ else if (cmd == "2")
 	}
 	if (File.Exists(userProvidedPath))
 	{
-		Parser.ArchiveHtmlFile(userProvidedPath);
+		var templateFile = Path.Combine(defaultWebsiteRoot, "templates", "archive","empty_lineup.html");
+		Parser.ArchiveHtmlFile(userProvidedPath, templateFile);
 	}	
 	if(!isSilentMode){
 		Console.WriteLine("Complete... Press enter to exit.");

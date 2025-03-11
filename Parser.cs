@@ -88,7 +88,7 @@ namespace GameGenerator
 			return title;	
 		}
 
-		public static void ArchiveHtmlFile(string htmlFile)
+		public static void ArchiveHtmlFile(string htmlFile, string replaceHtmlFile = "")
 		{
 			Console.WriteLine("ArchiveHtmlFile");
 			if (File.Exists(htmlFile))
@@ -123,6 +123,17 @@ namespace GameGenerator
 								UpdateArchiveHtml(archiveIndex, title, "index.html", htmlFile);
 							}
 						}
+					}
+				}
+				if (File.Exists(replaceHtmlFile))
+				{
+					try
+					{
+						File.WriteAllText(htmlFile, File.ReadAllText(replaceHtmlFile));
+					}
+					catch
+					{
+						//
 					}
 				}
 			}
