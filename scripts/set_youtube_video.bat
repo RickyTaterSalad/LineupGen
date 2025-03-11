@@ -6,7 +6,8 @@ rem publish lineup
 
 cd "%WEBSITE_DIR%"
 git pull
-git commit -am "Sync Latest Youtube Video %DATE:~-4%_%DATE:~4,2%_%DATE:~7,2%_%TIME:~0,2%_%TIME:~3,2%_%TIME:~6,2%"
+git add .
+git commit -m "Sync Latest Youtube Video %DATE:~-4%_%DATE:~4,2%_%DATE:~7,2%_%TIME:~0,2%_%TIME:~3,2%_%TIME:~6,2%"
 git push
 
 cd "%~dp0"
