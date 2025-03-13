@@ -1,104 +1,52 @@
-﻿using GameGenerator;
+﻿using LineupGen;
 using System.Text.RegularExpressions;
+using static LineupGen.Options;
 
-
-var cmd = string.Empty;
-var retries = 10;
-var count = 0;
-const string defaultWebsiteRoot = "C:\\Github\\BaseballWebsite";
-
-const string defaultIndexHtml = "C:\\Github\\BaseballWebsite\\2025\\Mustang\\Cubs\\index.html";
-
-var directoryArg = string.Empty;
-var linkArg = string.Empty;
-var isSilentMode = false;
-var isScriptMode = false;
-var isPublishMode = false;
-var isTakeLineupOfflineMode = false;
-var isSetYoutubeLinkMode = false;
-var isArchiveMode = false;
-foreach (var arg in args){
-	if(Directory.Exists(arg)){
-		directoryArg = arg;
-		isSilentMode = isScriptMode = true;
-		break;
-	}
-	if(arg?.StartsWith("http") ?? false){
-		Console.WriteLine($"URL Passed: {arg}");
-		linkArg = arg;
-	}
-	if(!isSilentMode && "silent".Equals(arg,StringComparison.InvariantCultureIgnoreCase)){
-		Console.WriteLine("Silent Mode");
-		isSilentMode = true;
-	}
-	if(!isScriptMode && "script".Equals(arg,StringComparison.InvariantCultureIgnoreCase)){
-		Console.WriteLine("Script Mode");
-		isScriptMode = true;
-	}
-	if(!isPublishMode && "publish".Equals(arg,StringComparison.InvariantCultureIgnoreCase)){
-		Console.WriteLine("Publish Mode");
-		isPublishMode = true;
-	}
-	if(!isTakeLineupOfflineMode && "offline".Equals(arg,StringComparison.InvariantCultureIgnoreCase)){
-		Console.WriteLine("Offline Mode");
-		isTakeLineupOfflineMode = true;
-	}
-	if(!isSetYoutubeLinkMode && "youtube".Equals(arg,StringComparison.InvariantCultureIgnoreCase)){
-		Console.WriteLine("Youtube Link Mode");
-		isSetYoutubeLinkMode = true;
-	}
-		if(!isArchiveMode && "archive".Equals(arg,StringComparison.InvariantCultureIgnoreCase)){
-		Console.WriteLine("Archive Mode");
-		isArchiveMode = true;
-	}
-	
-}
-isSilentMode = isSilentMode || isScriptMode || isPublishMode || isTakeLineupOfflineMode || isSetYoutubeLinkMode || isArchiveMode;
-
-
-if(!isSilentMode){
-	Console.WriteLine("1 - Current Lineup (JOPLIN TABLE)");
-	Console.WriteLine("2 - Archive Current");
-	Console.WriteLine("3 - Publish Lineup");
-	Console.WriteLine("4 - Take Lineup Offline");
-	while (cmd != "1" && cmd != "2" && count++ < retries)
-	{
-		cmd  = Console.ReadLine();
-	}
-}
-else{
-	//silent
-	cmd = isPublishMode ? "3": (isTakeLineupOfflineMode ? "4" : isSetYoutubeLinkMode ? "5": isArchiveMode ? "2" : "1");
-}
-count = 0;
-if (cmd == "1")
+var opts = CommandLine.Parser.Default.ParseArguments<Options>(args)?.Value;
+if(opts == null)
 {
-	var joplinTextPath = string.Empty;
-	while (!File.Exists(joplinTextPath) && count++ < retries)
-	{
-		Console.WriteLine($"Path to .md table export directory (default: {Parser.defaultLineupProcessingFolder})");
-		if(!isSilentMode){
-			joplinTextPath = Console.ReadLine();
-		}
-		if (string.IsNullOrWhiteSpace(joplinTextPath))
-		{
-			joplinTextPath = !string.IsNullOrWhiteSpace(directoryArg) ? directoryArg : Parser.defaultLineupProcessingFolder;
-		}
-		if (Directory.Exists(joplinTextPath))
-		{
-			joplinTextPath = new DirectoryInfo(joplinTextPath).GetFiles("*.md").OrderByDescending(f => f.LastWriteTime).FirstOrDefault()?.FullName;
-		}
-		if(isSilentMode){
-			break;
-		}
-	}
+	Console.WriteLine("Invalid Options Passed");
+	return;
+}
 
-	if (File.Exists(joplinTextPath))
+var mode = opts.GetMode();
+if(mode == MODE.NONE)
+{
+	Console.WriteLine("Invalid Mode Passed");
+}
+
+if (mode == MODE.PUBLISH)
+{
+	if (string.IsNullOrWhiteSpace(opts.TeamRootDirectory))
 	{
-		Console.WriteLine($"Using Table File: " + joplinTextPath);
+		Console.WriteLine("TeamRootDirectory null");
+		return;
+	}
+	if (!Directory.Exists(opts.TeamRootDirectory))
+	{
+		Console.WriteLine("TeamRootDirectory does not exist");
+		return;
+	}
+	if (string.IsNullOrWhiteSpace(opts.MDDirectory))
+	{
+		Console.WriteLine("MDDirectory null");
+		return;
+	}
+	if (!Directory.Exists(opts.MDDirectory))
+	{
+		Console.WriteLine("MDDirectory does not exist");
+		return;
+	}
+	var teamIndexHTML = Path.Combine(opts.TeamRootDirectory, "index.html");
+
+	var mdFile = new DirectoryInfo(opts.MDDirectory).GetFiles("*.md").OrderByDescending(f => f.LastWriteTime).FirstOrDefault()?.FullName;
+
+	if (File.Exists(mdFile))
+	{
+		Console.WriteLine($"Using Table File: " + mdFile);
 		var tableRowRegexp = new Regex("\\|[0-9\\s]+\\|(.*)\\|(.*)\\|(.*)\\|");
 		var title = string.Empty;
-		var joplinLines = File.ReadAllLines(joplinTextPath);
+		var joplinLines = File.ReadAllLines(mdFile);
 		int curr = 0;
 		var lineupDict = new Dictionary<string, List<Tuple<string, string, string>>>();
 		var currentDict = string.Empty;
@@ -169,101 +117,80 @@ if (cmd == "1")
 		}
 		var tempFile = Path.GetTempFileName();
 		File.WriteAllLines(tempFile, lines);
-		var outputHTMLPath = string.Empty;
-		if(!isSilentMode){
-			Console.WriteLine($"Path To Existing Lineup HTML: (Default: {defaultIndexHtml})");
-			outputHTMLPath = Console.ReadLine();
-		}
-		if (string.IsNullOrWhiteSpace(outputHTMLPath))
-		{
-			outputHTMLPath = defaultIndexHtml;
-		}
-		else
-		{
-			if (Directory.Exists(outputHTMLPath))
-			{
-				outputHTMLPath = Path.Combine(outputHTMLPath, "index.html");
-			}
-		}
-		Parser.WriteLineupTable(tempFile, outputHTMLPath);
+		GameGenerator.Parser.WriteLineupTable(tempFile, teamIndexHTML);
 		File.Delete(tempFile);
 	}
 }
 
-else if (cmd == "2")
+else if (mode == MODE.ARCHIVE)
 {
-	var userProvidedPath = string.Empty;
-	while (!File.Exists(userProvidedPath) && count++ < retries)
+	if (string.IsNullOrWhiteSpace(opts.WebsiteRoot))
 	{
-		if(!isSilentMode){
-			Console.WriteLine($"Path To Existing Lineup HTML: (Default: {defaultIndexHtml})");
-			userProvidedPath = Console.ReadLine();
-		}
-		if (string.IsNullOrWhiteSpace(userProvidedPath))
-		{
-			userProvidedPath = defaultIndexHtml;
-		}
-		else
-		{
-			if (Directory.Exists(userProvidedPath))
-			{
-				userProvidedPath = Path.Combine(userProvidedPath, "index.html");
-			}
-		}
-		if(isSilentMode){
-			break;
-		}
-	}
-	if (File.Exists(userProvidedPath))
-	{
-		var templateFile = Path.Combine(defaultWebsiteRoot, "templates", "archive","empty_lineup.html");
-		Parser.ArchiveHtmlFile(userProvidedPath, templateFile);
-	}	
-	if(!isSilentMode){
-		Console.WriteLine("Complete... Press enter to exit.");
-		Console.ReadLine();
-	}
-}
-
-else if (cmd == "3" || cmd == "4")
-{
-	Console.WriteLine("Replacing root index.html....");
-	var websiteRoot = string.Empty;
-	while (!File.Exists(websiteRoot) && count++ < retries)
-	{
-		if(!isSilentMode){
-			Console.WriteLine($"Path To Website Root: (Default: {defaultWebsiteRoot})");
-			websiteRoot = Console.ReadLine();
-		}
-		if (string.IsNullOrWhiteSpace(websiteRoot))
-		{
-			websiteRoot = defaultWebsiteRoot;
-		}
-		if(isSilentMode){
-			break;
-		}
-	}
-	if (Directory.Exists(defaultWebsiteRoot))
-	{
-		var idxToCopy = cmd == "3" ? "index_lineup.html" : "index_no_lineup.html";
-		var templateFile = Path.Combine(defaultWebsiteRoot,"templates",idxToCopy);
-		Console.WriteLine($"Template: {templateFile}");
-		if(File.Exists(templateFile)){
-			Console.WriteLine($"Copying...");
-			File.Copy(templateFile,Path.Combine(websiteRoot,"index.html"),true);
-			Console.WriteLine($"Copied.");
-		}
-	}
-	if(!isSilentMode){
-		Console.WriteLine("Complete... Press enter to exit.");
-		Console.ReadLine();
-	}
-}
-else if (cmd == "5")
-{
-	//set youtube link on latest archived lineup
-	if(string.IsNullOrWhiteSpace(linkArg)){
+		Console.WriteLine("WebsiteRoot null");
 		return;
 	}
-	Parser.UpdateLatestArchiveEntryWithYoutubeLink(linkArg, Path.GetDirectoryName(defaultIndexHtml) ?? string.Empty);
+	if (!Directory.Exists(opts.WebsiteRoot))
+	{
+		Console.WriteLine("WebsiteRoot does not exist");
+		return;
+	}
+	if (string.IsNullOrWhiteSpace(opts.ArchiveHtmlPath))
+	{
+		Console.WriteLine("ArchiveHtmlPath null");
+		return;
+	}
+	if (!File.Exists(opts.ArchiveHtmlPath))
+	{
+		Console.WriteLine("ArchiveHtmlPath does not exist");
+		return;
+	}
+	var templateFile = Path.Combine(opts.WebsiteRoot, "templates", "archive", "empty_lineup.html");
+	GameGenerator.Parser.ArchiveHtmlFile(opts.ArchiveHtmlPath, templateFile);
+}
+
+else if (mode == MODE.YOUTUBE)
+{
+	//set YouTube link on latest archived lineup
+	if (string.IsNullOrWhiteSpace(opts.VideoUrl))
+	{
+		Console.WriteLine("VideoUrl null");
+		return;
+	}
+	if (string.IsNullOrWhiteSpace(opts.TeamRootDirectory))
+	{
+		Console.WriteLine("TeamRootDirectory null");
+		return;
+	}
+	if (!Directory.Exists(opts.TeamRootDirectory))
+	{
+		Console.WriteLine("TeamRootDirectory does not exist");
+		return;
+	}
+	GameGenerator.Parser.UpdateLatestArchiveEntryWithYoutubeLink(opts.VideoUrl, opts.TeamRootDirectory ?? string.Empty);
+}
+
+
+
+//push the correct index.html
+if (mode == MODE.ARCHIVE || mode == MODE.PUBLISH || mode == MODE.OFFLINE)
+{
+	if (string.IsNullOrWhiteSpace(opts.WebsiteRoot))
+	{
+		Console.WriteLine("WebsiteRoot null");
+		return;
+	}
+	if (!Directory.Exists(opts.WebsiteRoot))
+	{
+		Console.WriteLine("WebsiteRoot does not exist");
+		return;
+	}
+	Console.WriteLine("Replacing root index.html....");
+	var templateFile = Path.Combine(opts.WebsiteRoot, "templates", mode == MODE.PUBLISH ? "index_lineup.html" : "index_no_lineup.html");
+	Console.WriteLine($"Template: {templateFile}");
+	if (File.Exists(templateFile))
+	{
+		Console.WriteLine($"Copying...");
+		File.Copy(templateFile, Path.Combine(opts.WebsiteRoot, "index.html"), true);
+		Console.WriteLine($"Copied.");
+	}
 }
