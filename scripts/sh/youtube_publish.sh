@@ -10,13 +10,12 @@ LINEUP_GEN_REPO="media/Storage/Github/LineupGen"
 LINEUP_GEN_EXE="$LINEUP_GEN_REPO/bin/Release/net80/LineupGen"
 GIT_BIN="/usr/bin/git"
 
+
 timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
 
 cd "$WEBSITE_DIR"
 $GIT_BIN pull
 
-$LINEUP_GEN_EXE -m archive -r "$WEBSITE_DIR" -t "$TEAM_ROOT_DIR"
-$LINEUP_GEN_EXE -m offline -r "$WEBSITE_DIR"
 $LINEUP_GEN_EXE -m youtube -t "$TEAM_ROOT_DIR" -u "$1"
 
 if ["$2" == "no-commit"]; then
@@ -26,5 +25,5 @@ fi
 
 
 $GIT_BIN add .
-$GIT_BIN commit -m "archive_take_offline_set_youtube_video $timestamp"
+$GIT_BIN commit -m "Set YouTube $timestamp"
 $GIT_BIN push
