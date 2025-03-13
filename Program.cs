@@ -134,18 +134,24 @@ else if (mode == MODE.ARCHIVE)
 		Console.WriteLine("WebsiteRoot does not exist");
 		return;
 	}
-	if (string.IsNullOrWhiteSpace(opts.ArchiveHtmlPath))
+	if (string.IsNullOrWhiteSpace(opts.TeamRootDirectory))
 	{
-		Console.WriteLine("ArchiveHtmlPath null");
+		Console.WriteLine("TeamRootDirectory null");
 		return;
 	}
-	if (!File.Exists(opts.ArchiveHtmlPath))
+		if (!Directory.Exists(opts.TeamRootDirectory))
 	{
-		Console.WriteLine("ArchiveHtmlPath does not exist");
+		Console.WriteLine("TeamRootDirectory does not exist");
+		return;
+	}
+	var archiveHtmlPath = Path.Combine(opts.TeamRootDirectory,"index.html");
+	if (!File.Exists(archiveHtmlPath))
+	{
+		Console.WriteLine($"{archiveHtmlPath} does not exist");
 		return;
 	}
 	var templateFile = Path.Combine(opts.WebsiteRoot, "templates", "archive", "empty_lineup.html");
-	GameGenerator.Parser.ArchiveHtmlFile(opts.ArchiveHtmlPath, templateFile);
+	GameGenerator.Parser.ArchiveHtmlFile(archiveHtmlPath, templateFile);
 }
 
 else if (mode == MODE.YOUTUBE)
