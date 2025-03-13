@@ -1,0 +1,13 @@
+#!/bin/bash
+
+WEBSITE_DIR="/media/Storage/Github/BaseballWebsite"
+LINEUP_GEN_REPO="/media/Storage/Github/LineupGen"
+LINEUP_GEN_EXE="$LINEUP_GEN_REPO/bin/Release/net80/LineupGen"
+
+timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
+
+cd "$WEBSITE_DIR"
+git pull
+
+# publish lineup
+$LINEUP_GEN_EXE -m offline -r "$WEBSITE_DIR"
