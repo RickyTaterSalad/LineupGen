@@ -12,41 +12,47 @@ namespace GameGenerator
 		const string noCacheMeta = "<meta http-equiv=\"Cache-Control\" content=\"no-cache, no-store, must-revalidate\"/><meta http-equiv=\"Pragma\" content=\"no-cache\"/><meta http-equiv=\"Expires\" content=\"0\"/>";
 		const string lineupTemplate = "<!DOCTYPE html><html lang=\"en\"><head>#NO_CACHE_META#<meta charset=\"UTF-8\"/><link rel=\"icon\" type=\"image/x-icon\" href=\"/images/favicon.ico\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"stylesheet\" href=\"../../../style.css\"><title>#TITLE#</title></head><body><div class=\"exported-note\"><div class=\"exported-note-title\">#TITLE#</div><div id=\"rendered-md\">#TABLES#<h1 id=\"links\"><strong>Links</strong></h1><p><a title=\"https://riverabaseball.com\" href=\"https://riverabaseball.com\">Home</a>&nbsp;&nbsp;&nbsp;<a title=\"https://www.youtube.com/playlist?list=PLdbXG0VpP0Mb4p5j_fUam-AX1btECUJNR\" href=\"https://www.youtube.com/playlist?list=PLdbXG0VpP0Mb4p5j_fUam-AX1btECUJNR\">YouTube Playlist</a>&nbsp;&nbsp;&nbsp;<a href=\"./archive/index.html\">Archived Lineups</a></p></div></div></body></html>";
 		const string picturesIndexTemplate = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\" /><link rel=\"icon\" type=\"image/x-icon\" href=\"/images/favicon.ico\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" /><link rel=\"stylesheet\" href=\"../../../../../style.css\"/><title>Pictures</title></head><body><div class=\"exported-note\"><div><h1 id=\"Pictures\"><strong>Pictures</strong></h1><div class=\"joplin-table-wrapper\"><table><thead><tr><th>Player</th></tr></thead><tbody><!--<tr>\r\n\t\t\t\t\t\t\t<td><a href=\"EthanRivera.jpg\">Ethan Rivera</a> </td>\r\n\t\t\t\t\t\t</tr>--></table></div><h1 id=\"links\"><strong>Links</strong></h1><p class=\"bottomLinks\"><a href=\"https://riverabaseball.com\">Home</a><a href=\"https://www.youtube.com/playlist?list=PLdbXG0VpP0Mb4p5j_fUam-AX1btECUJNR\">YouTube Playlist</a><a href=\"../../archive/index.html\">Archived Lineups</a></p></div></div></body></html>";
-	
-	
-	public static void UpdateLatestArchiveEntryWithYoutubeLink(string youtubeLink,string teamWebsiteRoot){
-		Console.WriteLine("UpdateLatestArchiveEntryWithYoutubeLink");
-		var archiveFolder = Path.Combine(teamWebsiteRoot ?? string.Empty, "archive");
-		var archiveIndex = Path.Combine(archiveFolder, "index.html");
-		var dom = XDocument.Load(archiveIndex);
-		var linkUpdated = false;
-		if (dom?.Root != null)
+
+
+		public static void UpdateLatestArchiveEntryWithYoutubeLink(string youtubeLink, string teamWebsiteRoot)
 		{
-			Console.WriteLine("UpdateLatestArchiveEntryWithYoutubeLink:ParsingDOM");
-			var nsp = dom.Root.Name.Namespace;
-			var trNsp = nsp + "tr";
-			var aNsp = nsp + "a";
-			var lastRowLinks = dom.Root.Descendants(trNsp).LastOrDefault()?.Descendants(aNsp)?.Reverse() ?? Enumerable.Empty<XElement>();
-			foreach(var link in lastRowLinks){
-				Console.WriteLine("UpdateLatestArchiveEntryWithYoutubeLink:LinkLoop");
-				if("Video".Equals(link.Value)){
-					if("_blank".Equals(link.Attribute("href")?.Value)){
-						link.SetAttributeValue("href",youtubeLink);
-						linkUpdated = true;
-						break;
+			Console.WriteLine("UpdateLatestArchiveEntryWithYoutubeLink");
+			var archiveFolder = Path.Combine(teamWebsiteRoot ?? string.Empty, "archive");
+			var archiveIndex = Path.Combine(archiveFolder, "index.html");
+			var dom = XDocument.Load(archiveIndex);
+			var linkUpdated = false;
+			if (dom?.Root != null)
+			{
+				Console.WriteLine("UpdateLatestArchiveEntryWithYoutubeLink:ParsingDOM");
+				var nsp = dom.Root.Name.Namespace;
+				var trNsp = nsp + "tr";
+				var aNsp = nsp + "a";
+				var lastRowLinks = dom.Root.Descendants(trNsp).LastOrDefault()?.Descendants(aNsp)?.Reverse() ?? Enumerable.Empty<XElement>();
+				foreach (var link in lastRowLinks)
+				{
+					Console.WriteLine("UpdateLatestArchiveEntryWithYoutubeLink:LinkLoop");
+					if ("Video".Equals(link.Value))
+					{
+						if ("_blank".Equals(link.Attribute("href")?.Value))
+						{
+							link.SetAttributeValue("href", youtubeLink);
+							linkUpdated = true;
+							break;
+						}
 					}
 				}
+				if (linkUpdated)
+				{
+					Console.WriteLine("UpdateLatestArchiveEntryWithYoutubeLink:linkUpdated");
+					File.WriteAllText(archiveIndex, dom.ToString());
+				}
+				else
+				{
+					Console.WriteLine("UpdateLatestArchiveEntryWithYoutubeLink:linkNotUpdated");
+				}
 			}
-			if(linkUpdated){
-				Console.WriteLine("UpdateLatestArchiveEntryWithYoutubeLink:linkUpdated");
-				File.WriteAllText(archiveIndex, dom.ToString());
-			}
-			else{
-				Console.WriteLine("UpdateLatestArchiveEntryWithYoutubeLink:linkNotUpdated");
-			}
-		}
 
-	}
+		}
 		public static bool WriteLineupTable(string path, string outputHTMLPath)
 		{
 			Console.WriteLine("WriteLineupTable");
@@ -57,7 +63,8 @@ namespace GameGenerator
 				{
 					var title = GetGameTitleFromHTML(outputHTMLPath);
 					//make sure this isnt just an updated lineup
-					if(!string.IsNullOrWhiteSpace(title) && !title.Equals(res.Item1)){
+					if (!string.IsNullOrWhiteSpace(title) && !title.Equals(res.Item1))
+					{
 						ArchiveHtmlFile(outputHTMLPath);
 					}
 					Console.WriteLine($"Deleting existing current lineup at: {outputHTMLPath}");
@@ -70,7 +77,8 @@ namespace GameGenerator
 			return false;
 		}
 
-		private static string GetGameTitleFromHTML(string htmlPath){
+		private static string GetGameTitleFromHTML(string htmlPath)
+		{
 			Console.WriteLine("GetGameTitleFromHTML");
 			var title = string.Empty;
 			if (File.Exists(htmlPath))
@@ -82,64 +90,77 @@ namespace GameGenerator
 					title = m.Groups[1].Value;
 				}
 			}
-			return title;	
+			return title;
 		}
 
 		public static void ArchiveHtmlFile(string htmlFile, string replaceHtmlFile = "")
 		{
 			Console.WriteLine("ArchiveHtmlFile");
-			if (File.Exists(htmlFile))
+			if (!File.Exists(htmlFile))
 			{
-				var allText = File.ReadAllText(htmlFile);
-				var title = string.Empty;
-				var m = titleRegexp.Match(allText);
-				if (m.Success && m.Groups.Count > 1)
+				Console.WriteLine($"{htmlFile} does not exist");
+			}
+			var allText = File.ReadAllText(htmlFile);
+			var title = string.Empty;
+			var m = titleRegexp.Match(allText);
+			if (m.Success && m.Groups.Count > 1)
+			{
+				title = m.Groups[1].Value;
+				Console.WriteLine($"title: {title}");
+			}
+			else
+			{
+				Console.WriteLine($"retrieve title failed...");
+			}
+			allText = allText.Replace("./archive/index.html", "../index.html").Replace("../style.css", "../../../style.css").Replace(noCacheMeta, string.Empty);
+			var archiveFolder = Path.Combine(Path.GetDirectoryName(htmlFile) ?? string.Empty, "archive");
+			var archiveIndex = Path.Combine(archiveFolder, "index.html");
+			Console.WriteLine($"Archive Index: {archiveIndex}");
+			if (!Directory.Exists(archiveFolder))
+			{
+				Directory.CreateDirectory(archiveFolder);
+			}
+			if (Directory.Exists(archiveFolder))
+			{
+				//create game folder, if it exists this has alread been archived
+				var outputFolder = Path.Combine(archiveFolder, title);
+				if (!Directory.Exists(outputFolder))
 				{
-					title = m.Groups[1].Value;
+					Console.WriteLine($"Creating Game Folder: {outputFolder}");
+					Directory.CreateDirectory(outputFolder);
 				}
-				allText = allText.Replace("./archive/index.html", "../index.html").Replace("../style.css", "../../../style.css").Replace(noCacheMeta,string.Empty);
-				var archiveFolder = Path.Combine(Path.GetDirectoryName(htmlFile) ?? string.Empty, "archive");
-				var archiveIndex = Path.Combine(archiveFolder, "index.html");
-				if (!Directory.Exists(archiveFolder))
+				if (Directory.Exists(outputFolder))
 				{
-					Directory.CreateDirectory(archiveFolder);
-				}
-				if (Directory.Exists(archiveFolder))
-				{
-					//create game folder, if it exists this has alread been archived
-					var outputFolder = Path.Combine(archiveFolder, title);
-					if (!Directory.Exists(outputFolder))
+					Console.WriteLine($"Game Folder: {outputFolder}");
+					var outputFile = Path.Combine(outputFolder, "index.html");
+					File.WriteAllText(outputFile, allText);
+					if (File.Exists(archiveIndex))
 					{
-						Directory.CreateDirectory(outputFolder);
-						if (Directory.Exists(outputFolder))
-						{
-							var outputFile = Path.Combine(outputFolder, "index.html");
-							File.WriteAllText(outputFile, allText);
-							if (File.Exists(archiveIndex))
-							{
-								UpdateArchiveHtml(archiveIndex, title, "index.html", htmlFile);
-							}
-						}
+						UpdateArchiveHtml(archiveIndex, title, "index.html", htmlFile);
 					}
 				}
-				if (File.Exists(replaceHtmlFile))
+
+			}
+			if (File.Exists(replaceHtmlFile))
+			{
+				try
 				{
-					try
-					{
-						File.WriteAllText(htmlFile, File.ReadAllText(replaceHtmlFile));
-					}
-					catch
-					{
-						//
-					}
+					File.WriteAllText(htmlFile, File.ReadAllText(replaceHtmlFile));
+				}
+				catch
+				{
+					//
 				}
 			}
+
 		}
 
 		private static void UpdateArchiveHtml(string path, string archivedGameFolderName, string outputHtmlFileName, string sourceHtmlPath)
 		{
+			Console.WriteLine($"UpdateArchiveHtml");
 			if (!File.Exists(path))
 			{
+				Console.WriteLine($"UpdateArchiveHtml path does not exist {path}");
 				return;
 			}
 			var rootDir = Path.GetDirectoryName(sourceHtmlPath) ?? string.Empty;
@@ -235,7 +256,7 @@ namespace GameGenerator
 					}
 				}
 				tableHtml += "</tbody></table>";
-				return new Tuple<string, string>(gameTitle, lineupTemplate.Replace("#NO_CACHE_META#",noCacheMeta).Replace("#TITLE#", gameTitle).Replace("#TABLES#", tableHtml));
+				return new Tuple<string, string>(gameTitle, lineupTemplate.Replace("#NO_CACHE_META#", noCacheMeta).Replace("#TITLE#", gameTitle).Replace("#TABLES#", tableHtml));
 			}
 			return new Tuple<string, string>(string.Empty, string.Empty);
 		}

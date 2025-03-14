@@ -1,8 +1,8 @@
 #!/bin/bash
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-
-./no-commit/publish_lineup.sh
+$SCRIPT_DIR/no-commit/publish_lineup.sh
 
 
 timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
