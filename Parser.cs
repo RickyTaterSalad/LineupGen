@@ -107,6 +107,11 @@ namespace GameGenerator
 			{
 				title = m.Groups[1].Value;
 				Console.WriteLine($"title: {title}");
+				if ("rivera baseball".Equals(title, StringComparison.CurrentCultureIgnoreCase))
+				{
+					Console.WriteLine($"attempting to archive offline lineup... returning");
+					return;
+				}
 			}
 			else
 			{
@@ -199,19 +204,20 @@ namespace GameGenerator
 
 				try
 				{
-					//create pictures folder and html
+					if (!Directory.Exists(picturesDir))
+					{
+						Console.WriteLine($"Creating pictures directory inside: {picturesDir}");
+						Directory.CreateDirectory(picturesDir);
+					}
 					if (Directory.Exists(picturesDir))
 					{
 						if (!Directory.Exists(archivedPicturesDirToCreate))
 						{
-							if (!Directory.Exists(archivedPicturesDirToCreate))
-							{
-								Directory.CreateDirectory(archivedPicturesDirToCreate);
-							}
-							if (Directory.Exists(archivedPicturesDirToCreate))
-							{
-								File.WriteAllText(Path.Combine(archivedPicturesDirToCreate, "index.html"), picturesIndexTemplate);
-							}
+							Directory.CreateDirectory(archivedPicturesDirToCreate);
+						}
+						if (Directory.Exists(archivedPicturesDirToCreate))
+						{
+							File.WriteAllText(Path.Combine(archivedPicturesDirToCreate, "index.html"), picturesIndexTemplate);
 						}
 					}
 				}
