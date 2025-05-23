@@ -318,7 +318,6 @@ namespace GameGenerator
 				if (!string.IsNullOrWhiteSpace(notesHtml))
 				{
 					notesHtml += "</pre>";
-					notesHtml = $"<h1><strong>Notes</strong></h1>{notesHtml}";
 				}
 				return new Tuple<string, string>(gameTitle, lineupTemplate.Replace("#NO_CACHE_META#", noCacheMeta).Replace("#TITLE#", gameTitle).Replace("#TABLES#", tableHtml).Replace("#NOTES#", notesHtml));
 			}

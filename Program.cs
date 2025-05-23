@@ -94,7 +94,7 @@ else if (mode == MODE.PUBLISH)
 					if (intoLineupNotes)
 					{
 						var trimmed = line.Trim();
-						if (trimmed.Equals("substitutions", StringComparison.InvariantCultureIgnoreCase) || trimmed.Equals("pitching order", StringComparison.InvariantCultureIgnoreCase))
+						if (trimmed.Equals("substitutions", StringComparison.InvariantCultureIgnoreCase) || trimmed.Equals("pitching", StringComparison.InvariantCultureIgnoreCase))
 						{
 							noteLines.Add($"<br/><b>{trimmed}</b>");
 							noteLines.Add($"<hr/>");
