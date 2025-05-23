@@ -3,19 +3,29 @@ using System.Text.RegularExpressions;
 using static LineupGen.Options;
 
 var opts = CommandLine.Parser.Default.ParseArguments<Options>(args)?.Value;
-if(opts == null)
+//MODE mode = MODE.TEST; //MODE.NONE;
+MODE mode = MODE.NONE;
+var testMode = mode == MODE.TEST;
+if (testMode)
+{
+	opts ??= new Options();
+	opts.Mode = "publish";
+	opts.TeamRootDirectory = @"C:\Repos\BaseballWebsite\2025\Mustang\AllStars";
+	opts.MDDirectory = @"C:\temp";
+}
+else if (opts == null)
 {
 	Console.WriteLine("Invalid Options Passed");
 	return;
 }
+mode = opts.GetMode();
 
-var mode = opts.GetMode();
-if(mode == MODE.NONE)
+if (mode == MODE.NONE)
 {
 	Console.WriteLine("Invalid Mode Passed");
 }
 
-if (mode == MODE.PUBLISH)
+else if (mode == MODE.PUBLISH)
 {
 	if (string.IsNullOrWhiteSpace(opts.TeamRootDirectory))
 	{
@@ -44,13 +54,16 @@ if (mode == MODE.PUBLISH)
 	if (File.Exists(mdFile))
 	{
 		Console.WriteLine($"Using Table File: " + mdFile);
-		var tableRowRegexp = new Regex("\\|[0-9\\s]+\\|(.*)\\|(.*)\\|(.*)\\|");
+		var linupTableRowRegexp = new Regex("\\|[0-9\\s]+\\|(.*)\\|(.*)\\|(.*)\\|");
+		var benchTableRowRegexp = new Regex("\\|(.*)\\|(.*)\\|");
 		var title = string.Empty;
 		var joplinLines = File.ReadAllLines(mdFile);
 		int curr = 0;
 		var lineupDict = new Dictionary<string, List<Tuple<string, string, string>>>();
+		var benchList = new List<Tuple<string, string>>();
+		var noteLines = new List<string>();
 		var currentDict = string.Empty;
-
+		var intoLineupNotes = false;
 		foreach (var line in joplinLines)
 		{
 			if (curr == 0)
@@ -63,7 +76,7 @@ if (mode == MODE.PUBLISH)
 				{
 					continue;
 				}
-				if (line.StartsWith("#"))
+				if (line.StartsWith("#") && !line.StartsWith("##"))
 				{
 					currentDict = line[1..].Trim();
 					if (!lineupDict.ContainsKey(currentDict))
@@ -71,20 +84,39 @@ if (mode == MODE.PUBLISH)
 						lineupDict.Add(currentDict, new List<Tuple<string, string, string>>());
 					}
 				}
+				else if (line.StartsWith("##") && line.Contains("Notes"))
+				{
+					intoLineupNotes = true;
+					continue;
+				}
 				else
 				{
+					if (intoLineupNotes)
+					{
+						var trimmed = line.Trim();
+						if (trimmed.Equals("substitutions", StringComparison.InvariantCultureIgnoreCase) || trimmed.Equals("pitching order", StringComparison.InvariantCultureIgnoreCase))
+						{
+							noteLines.Add($"<br/><b>{trimmed}</b>");
+							noteLines.Add($"<hr/>");
+						}
+						else {
+							noteLines.Add(line);
+						}
+						continue;
+					}
 					//some sort of table entry
 					if (line.Contains("---"))
 					{
 						continue;
 					}
-					if (line.Contains("Order") && line.Contains("Name") && line.Contains("Number") && line.Contains("Position"))
+					if (line.Contains("Name") && line.Contains("Number"))
 					{
 						continue;
 					}
 					else
 					{
-						var m = tableRowRegexp.Match(line);
+						var isLinupRow = false;
+						var m = linupTableRowRegexp.Match(line);
 						if (m.Success && m.Groups.Count > 3)
 						{
 							var player = m.Groups[1].Value.Trim();
@@ -94,6 +126,17 @@ if (mode == MODE.PUBLISH)
 							{
 								lineupDict[currentDict].Add(new Tuple<string, string, string>(player, number, position));
 
+							}
+							isLinupRow = true;
+						}
+						if (!isLinupRow)
+						{
+							m = benchTableRowRegexp.Match(line);
+							if (m.Success && m.Groups.Count > 2)
+							{
+								var player = m.Groups[1].Value.Trim();
+								var number = m.Groups[2].Value.Trim();
+								benchList.Add(new Tuple<string, string>(player, number));
 							}
 						}
 					}
@@ -113,6 +156,22 @@ if (mode == MODE.PUBLISH)
 			foreach (var playerTuple in kvp.Value)
 			{
 				lines.Add($"{playerTuple.Item1};{playerTuple.Item2};{playerTuple.Item3}");
+			}
+		}
+		if (benchList.Any())
+		{
+			lines.Add($"#Bench");
+			foreach (var playerTuple in benchList)
+			{
+				lines.Add($"{playerTuple.Item1};{playerTuple.Item2}");
+			}
+		}
+		if (noteLines.Any())
+		{
+			lines.Add($"***");
+			foreach(var noteLine in noteLines)
+			{
+				lines.Add(noteLine);
 			}
 		}
 		var tempFile = Path.GetTempFileName();
@@ -175,28 +234,29 @@ else if (mode == MODE.YOUTUBE)
 	GameGenerator.Parser.UpdateLatestArchiveEntryWithYoutubeLink(opts.VideoUrl, opts.TeamRootDirectory ?? string.Empty);
 }
 
-
-
-//push the correct index.html
-if (mode == MODE.ARCHIVE || mode == MODE.PUBLISH || mode == MODE.OFFLINE)
+if (!testMode)
 {
-	if (string.IsNullOrWhiteSpace(opts.WebsiteRoot))
+	//push the correct index.html
+	if (mode == MODE.ARCHIVE || mode == MODE.PUBLISH || mode == MODE.OFFLINE)
 	{
-		Console.WriteLine("WebsiteRoot null");
-		return;
-	}
-	if (!Directory.Exists(opts.WebsiteRoot))
-	{
-		Console.WriteLine("WebsiteRoot does not exist");
-		return;
-	}
-	Console.WriteLine("Replacing root index.html....");
-	var templateFile = Path.Combine(opts.WebsiteRoot, "templates", mode == MODE.PUBLISH ? "index_lineup.html" : "index_no_lineup.html");
-	Console.WriteLine($"Template: {templateFile}");
-	if (File.Exists(templateFile))
-	{
-		Console.WriteLine($"Copying...");
-		File.Copy(templateFile, Path.Combine(opts.WebsiteRoot, "index.html"), true);
-		Console.WriteLine($"Copied.");
+		if (string.IsNullOrWhiteSpace(opts.WebsiteRoot))
+		{
+			Console.WriteLine("WebsiteRoot null");
+			return;
+		}
+		if (!Directory.Exists(opts.WebsiteRoot))
+		{
+			Console.WriteLine("WebsiteRoot does not exist");
+			return;
+		}
+		Console.WriteLine("Replacing root index.html....");
+		var templateFile = Path.Combine(opts.WebsiteRoot, "templates", mode == MODE.PUBLISH ? "index_lineup.html" : "index_no_lineup.html");
+		Console.WriteLine($"Template: {templateFile}");
+		if (File.Exists(templateFile))
+		{
+			Console.WriteLine($"Copying...");
+			File.Copy(templateFile, Path.Combine(opts.WebsiteRoot, "index.html"), true);
+			Console.WriteLine($"Copied.");
+		}
 	}
 }

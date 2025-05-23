@@ -55,7 +55,8 @@ namespace LineupGen
 			OFFLINE,
 			YOUTUBE,
 			ARCHIVE,
-			NONE
+			NONE,
+			TEST
 		}
 	}
 }
