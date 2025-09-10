@@ -13,3 +13,5 @@ rem git pull
 rem git add .
 rem git commit -m "Publish Lineup %DATE:~-4%_%DATE:~4,2%_%DATE:~7,2%_%TIME:~0,2%_%TIME:~3,2%_%TIME:~6,2%"
 
+cd %LINEUPS_REPO%
+move "*.md" archive
