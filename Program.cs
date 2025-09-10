@@ -3,15 +3,16 @@ using System.Text.RegularExpressions;
 using static LineupGen.Options;
 
 var opts = CommandLine.Parser.Default.ParseArguments<Options>(args)?.Value;
-//MODE mode = MODE.TEST; //MODE.NONE;
+//MODE mode = MODE.TEST;
 MODE mode = MODE.NONE;
 var testMode = mode == MODE.TEST;
 if (testMode)
 {
 	opts ??= new Options();
-	opts.Mode = "publish";
-	opts.TeamRootDirectory = @"C:\Repos\BaseballWebsite\2025\Mustang\AllStars";
-	opts.MDDirectory = @"C:\temp";
+	opts.Mode = "archive";
+	opts.TeamRootDirectory = @"C:\Repos\BaseballWebsite\2026\10U\Jaxx";
+	opts.WebsiteRoot = @"C:\Repos\BaseballWebsite";
+	opts.MDDirectory = @"C:\Repos\BaseballLineups\Baseball\2026\Diamond Jaxx\Current Lineup";
 }
 else if (opts == null)
 {

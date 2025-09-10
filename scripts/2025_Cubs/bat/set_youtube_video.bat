@@ -1,4 +1,4 @@
-set WEBSITE_DIR=C:\Github\BaseballWebsite
+set WEBSITE_DIR=C:\Repos\BaseballWebsite
 set LINEUP_GEN_EXE=C:\Github\LineupGen\bin\Release\net9.0\LineupGen.exe
 
 rem publish lineup

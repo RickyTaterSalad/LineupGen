@@ -10,8 +10,8 @@ namespace GameGenerator
 		private static Regex titleRegexp = new Regex("<title>(.*)<\\/title>");
 
 		const string noCacheMeta = "<meta http-equiv=\"Cache-Control\" content=\"no-cache, no-store, must-revalidate\"/><meta http-equiv=\"Pragma\" content=\"no-cache\"/><meta http-equiv=\"Expires\" content=\"0\"/>";
-		const string lineupTemplate = "<!DOCTYPE html><html lang=\"en\"><head>#NO_CACHE_META#<meta charset=\"UTF-8\"/><link rel=\"icon\" type=\"image/x-icon\" href=\"/images/favicon.ico\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"stylesheet\" href=\"/style.css\"><link rel=\"stylesheet\" href=\"/mod.css\"><title>#TITLE#</title></head><body><div class=\"exported-note\"><div class=\"exported-note-title\">#TITLE#</div><div id=\"rendered-md\">#TABLES#</div>#NOTES#</div><h1 id=\"links\"><strong>Links</strong></h1><p><a title=\"https://riverabaseball.com\" href=\"https://riverabaseball.com\">Home</a>&nbsp;&nbsp;&nbsp;<a title=\"Youtube Playlist\" href=\"https://youtube.com/playlist?list=PLdbXG0VpP0Mbb1QiRGcgjs-2TNjjz-7X0&si=Y4wGk6xrwDaf5vEy\">YouTube Playlist</a>&nbsp;&nbsp;&nbsp;<a href=\"./archive/index.html\">Archived Lineups</a><a href=\"/teamIndex.html\">Team Archive</a></p></div></div></body></html>";
-		const string picturesIndexTemplate = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\" /><link rel=\"icon\" type=\"image/x-icon\" href=\"/images/favicon.ico\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" /><link rel=\"stylesheet\" href=\"/style.css\"/><link rel=\"stylesheet\" href=\"/mod.css\"><title>Pictures</title></head><body><div class=\"exported-note\"><div><h1 id=\"Pictures\"><strong>Pictures</strong></h1><div class=\"joplin-table-wrapper\"><table><thead><tr><th>Player</th></tr></thead><tbody><!--<tr>\r\n\t\t\t\t\t\t\t<td><a href=\"EthanRivera.jpg\">Ethan Rivera</a> </td>\r\n\t\t\t\t\t\t</tr>--></table></div><h1 id=\"links\"><strong>Links</strong></h1><p class=\"bottomLinks\"><a href=\"https://riverabaseball.com\">Home</a><a href=\"https://www.youtube.com/playlist?list=PLdbXG0VpP0Mb4p5j_fUam-AX1btECUJNR\">YouTube Playlist</a><a href=\"../../archive/index.html\">Archived Lineups</a><a href=\"/teamIndex.html\">Team Archive</a></p></div></div></body></html>";
+		const string lineupTemplate = "<!DOCTYPE html><html lang=\"en\"><head>#NO_CACHE_META#<meta charset=\"UTF-8\"/><link rel=\"icon\" type=\"image/x-icon\" href=\"/images/favicon.ico\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"stylesheet\" href=\"/style.css\"><link rel=\"stylesheet\" href=\"/mod.css\"><title>#TITLE#</title></head><body><div class=\"exported-note\"><div class=\"exported-note-title\">#TITLE#</div><div id=\"rendered-md\">#TABLES#</div>#NOTES#</div><h1 id=\"links\"><strong>Links</strong></h1><p><a title=\"https://riverabaseball.com\" href=\"https://riverabaseball.com\">Home</a>&nbsp;&nbsp;&nbsp;<a href=\"./archive/index.html\">Archived Lineups</a><a href=\"/teamIndex.html\">Team Archive</a></p></div></div></body></html>";
+		const string picturesIndexTemplate = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"/><link rel=\"icon\" type=\"image/x-icon\" href=\"/images/favicon.ico\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"stylesheet\" href=\"/style.css\"/><link rel=\"stylesheet\" href=\"/mod.css\"><title>Pictures</title></head><body><div class=\"exported-note\"><div><h1 id=\"Pictures\"><strong>Pictures</strong></h1><div class=\"joplin-table-wrapper\"><table><thead><tr><th>Player</th></tr></thead><tbody><!--<tr>\r\n\t\t\t\t\t\t\t<td><a href=\"EthanRivera.jpg\">Ethan Rivera</a> </td>\r\n\t\t\t\t\t\t</tr>--></table></div><h1 id=\"links\"><strong>Links</strong></h1><p class=\"bottomLinks\"><a href=\"https://riverabaseball.com\">Home</a><a href=\"../../archive/index.html\">Archived Lineups</a><a href=\"/teamIndex.html\">Team Archive</a></p></div></div></body></html>";
 
 
 		public static void UpdateLatestArchiveEntryWithYoutubeLink(string youtubeLink, string teamWebsiteRoot)
@@ -176,7 +176,8 @@ namespace GameGenerator
 			var m = detailsRegexp.Match(archivedGameFolderName);
 			if (m.Success && m.Groups.Count > 3)
 			{
-				var visitor = m.Groups[1].Value.Trim();
+				var visitor = m.Groups[1].Value.Trim() ?? string.Empty;
+
 				if (visitor.Equals("cubs", StringComparison.InvariantCultureIgnoreCase))
 				{
 					visitor = "<img src=\"cubs.png\"/>";
@@ -185,7 +186,11 @@ namespace GameGenerator
 				{
 					visitor = "<img src=\"logo.png\"/>";
 				}
-				var home = m.Groups[2].Value.Trim();
+				else if (visitor.Contains("diamond jaxx", StringComparison.InvariantCultureIgnoreCase))
+				{
+					visitor = "<img src=\"jaxx.png\"/>";
+				}
+				var home = m.Groups[2].Value.Trim() ?? string.Empty;
 				if (home.Equals("cubs", StringComparison.InvariantCultureIgnoreCase))
 				{
 					home = "<img src=\"cubs.png\"/>";
@@ -194,6 +199,11 @@ namespace GameGenerator
 				{
 					visitor = "<img src=\"logo.png\"/>";
 				}
+				else if (home.Contains("diamond jaxx", StringComparison.InvariantCultureIgnoreCase))
+				{
+					visitor = "<img src=\"jaxx.png\"/>";
+				}
+
 				var dateString = m.Groups[3].Value.Trim();
 				outputRow = outputRow.Replace("#VISITOR#", visitor).Replace("#HOME#", home).Replace("#DATE#", dateString);
 			}

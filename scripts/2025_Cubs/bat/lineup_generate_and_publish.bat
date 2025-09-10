@@ -1,7 +1,7 @@
 @echo off
 set SCRIPTS_DIR=C:\Github\LineupGen\scripts
 set LINEUP_DIR=C:\Github\BaseballLineups
-set WEBSITE_DIR=C:\Github\BaseballWebsite
+set WEBSITE_DIR=C:\Repos\BaseballWebsite
 set LINEUP_GEN_EXE=C:\Github\LineupGen\bin\Release\net9.0\LineupGen.exe
 
 rem pull latest lineups

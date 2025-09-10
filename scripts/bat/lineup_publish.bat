@@ -1,14 +1,16 @@
 @echo off
-set WEBSITE_DIR=C:\Github\BaseballWebsite
-set LINEUP_GEN_EXE=C:\Github\LineupGen\bin\Release\net9.0\LineupGen.exe
+
+set WEBSITE_DIR=C:/Repos/BaseballWebsite
+set TEAM_ROOT_DIR=%WEBSITE_DIR%/2026/10U/Jaxx
+set LINEUP_GEN_REPO=C:/Repos/LineupGen
+set LINEUP_GEN_EXE=%LINEUP_GEN_REPO%/bin/Release/net80/LineupGen.exe
+set LINEUPS_REPO=C:/Repos/BaseballLineups
 
 rem publish lineup
-%LINEUP_GEN_EXE% "publish"
+%LINEUP_GEN_EXE% -m publish -r "%WEBSITE_DIR%" -t "%TEAM_ROOT_DIR%" -d "%LINEUPS_REPO%"
 
 cd "%WEBSITE_DIR%"
 git pull
 git add .
 git commit -m "Publish Lineup %DATE:~-4%_%DATE:~4,2%_%DATE:~7,2%_%TIME:~0,2%_%TIME:~3,2%_%TIME:~6,2%"
-git push
 
-cd "%~dp0"
